@@ -14,3 +14,4 @@
 | [0006](0006-dependency-supply-chain-checks.ru.md)       | Проверка цепочки поставок Rust-зависимостей           | Принято |
 | [0007](0007-web-e2e-in-a-real-browser.ru.md)            | Web E2E в настоящем браузере                          | Принято |
 | [0008](0008-github-pages-deployment.ru.md)              | Деплой на GitHub Pages после merge в `main`           | Принято |
+| [0009](0009-temporarily-run-ci-on-ubuntu.ru.md)         | Временно запускаем CI только на Ubuntu                | Принято |

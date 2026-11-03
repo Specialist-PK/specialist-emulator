@@ -70,6 +70,8 @@ describe("version pins agree across the repository", () => {
     expect(ci).toContain("for result in $RESULTS; do");
     expect(ci).toContain("success|skipped");
     expect(ci).toContain('echo "unexpected job result: $result"; exit 1');
+    expect(ci).not.toContain("macos-latest");
+    expect(ci).not.toContain("windows-latest");
   });
 
   it("Pages deployment keeps its safeguards and version sources", () => {

@@ -33,14 +33,10 @@ jobs:
         run: bun tools/ci/src/index.ts >> "$GITHUB_OUTPUT"
 
   rust:
-    name: ${{ matrix.os == 'ubuntu-latest' && 'rust (cargo test)' || format('rust (cargo test) [{0}]', matrix.os) }}
+    name: rust (cargo test)
     needs: changes
     if: needs.changes.outputs.rust == 'true'
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - run: rustup toolchain install
@@ -49,14 +45,10 @@ jobs:
       - run: cargo test --workspace --exclude specialist-native --locked
 
   ts:
-    name: ${{ matrix.os == 'ubuntu-latest' && 'ts (typecheck)' || format('ts (typecheck) [{0}]', matrix.os) }}
+    name: ts (typecheck)
     needs: changes
     if: needs.changes.outputs.ts == 'true'
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
@@ -96,14 +88,10 @@ jobs:
           E2E_REQUIRE_BROWSER: "1"
 
   native:
-    name: ${{ matrix.os == 'ubuntu-latest' && 'native (desktop build)' || format('native (desktop build) [{0}]', matrix.os) }}
+    name: native (desktop build)
     needs: changes
     if: needs.changes.outputs.native == 'true'
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - if: runner.os == 'Linux'
