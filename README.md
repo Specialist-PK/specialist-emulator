@@ -95,6 +95,10 @@ bun run build:native -- --no-bundle
 
 WebAssembly is generated into `packages/core-wasm/pkg`; this directory is not committed. The reusable web packages are `@specialist/core-wasm` and `@specialist/app`; standalone npm publishing is not configured.
 
+## GitHub Pages
+
+The emulator is published at [specialist-pk.github.io/specialist-emulator](https://specialist-pk.github.io/specialist-emulator/) by `.github/workflows/deploy.yml`. A merge into `main` triggers a production build and deployment; manual dispatch is also available. Pull requests run the same build and browser checks with the Pages base path, but never enable Pages or deploy. Repository Pages settings use GitHub Actions as the source. See [ADR-0008](docs/adr/0008-github-pages-deployment.md).
+
 ## Editors and debugging
 
 Workspace settings are provided for VS Code (`.vscode/`) and Zed (`.zed/`). Both use local Oxc/Oxfmt and rust-analyzer. Recommended VS Code extensions are also included in the devcontainer.

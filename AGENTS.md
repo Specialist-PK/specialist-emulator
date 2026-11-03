@@ -112,6 +112,10 @@ Do not duplicate these versions in CI or scripts. Node.js is not required. The o
 
 Workspace settings for VS Code and Zed must keep shared scenarios and tasks in sync. Web launch configurations call `web: ensure dev server`; attach configurations do not start or stop it. The helper reuses an existing server, builds WASM before starting a new one, waits for readiness, and keeps the server for subsequent sessions. Stop it with `web: stop dev server`.
 
+## Deployment
+
+`.github/workflows/deploy.yml` publishes the web emulator to GitHub Pages after a push to `main` and through manual dispatch. Pull requests run the Pages-base production build and browser E2E but must never enable Pages or deploy. Keep permissions job-scoped, preserve the `pages` concurrency queue without cancellation, and derive Vite's `base` from `actions/configure-pages` rather than hard-coding the repository name. See ADR-0008.
+
 ## GitHub workflow
 
 Work happens through issues and pull requests. GitHub Issues are the source of truth for plans; the pinned Roadmap issue provides the overview.
