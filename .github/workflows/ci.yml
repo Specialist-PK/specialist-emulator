@@ -143,6 +143,9 @@ jobs:
           RESULTS: ${{ join(needs.*.result, ' ') }}
         run: |
           echo "results: $RESULTS"
-          case " $RESULTS " in
-            *" failure "*|*" cancelled "*) echo "CI jobs failed or were cancelled"; exit 1 ;;
-          esac
+          for result in $RESULTS; do
+            case "$result" in
+              success|skipped) ;;
+              *) echo "unexpected job result: $result"; exit 1 ;;
+            esac
+          done

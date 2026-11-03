@@ -67,6 +67,9 @@ describe("version pins agree across the repository", () => {
     expect(ci).not.toContain("dtolnay/rust-toolchain");
     expect(ci).toContain("bun-version-file: package.json");
     expect(ci).toContain("tools/system-deps/debian.txt");
+    expect(ci).toContain("for result in $RESULTS; do");
+    expect(ci).toContain("success|skipped");
+    expect(ci).toContain('echo "unexpected job result: $result"; exit 1');
   });
 
   it("Pages deployment keeps its safeguards and version sources", () => {
