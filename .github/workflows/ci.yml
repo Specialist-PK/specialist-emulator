@@ -13,8 +13,29 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    name: changes
+    runs-on: ubuntu-latest
+    outputs:
+      rust: ${{ steps.select.outputs.rust }}
+      ts: ${{ steps.select.outputs.ts }}
+      wasm: ${{ steps.select.outputs.wasm }}
+      native: ${{ steps.select.outputs.native }}
+      deny: ${{ steps.select.outputs.deny }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - id: select
+        run: bun tools/ci/src/index.ts >> "$GITHUB_OUTPUT"
+
   rust:
-    name: rust (${{ matrix.os }})
+    name: ${{ matrix.os == 'ubuntu-latest' && 'rust (cargo test)' || format('rust (cargo test) [{0}]', matrix.os) }}
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -28,7 +49,9 @@ jobs:
       - run: cargo test --workspace --exclude specialist-native --locked
 
   ts:
-    name: ts (${{ matrix.os }})
+    name: ${{ matrix.os == 'ubuntu-latest' && 'ts (typecheck)' || format('ts (typecheck) [{0}]', matrix.os) }}
+    needs: changes
+    if: needs.changes.outputs.ts == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -46,7 +69,9 @@ jobs:
       - run: bun run test
 
   wasm:
-    name: wasm (build, test and e2e)
+    name: wasm (build and test)
+    needs: changes
+    if: needs.changes.outputs.wasm == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -62,13 +87,18 @@ jobs:
         with:
           bun-version-file: package.json
       - run: bun install --frozen-lockfile
+      - run: bun run boundaries
       - run: bun run check:wasm
       - run: bun run test:wasm
       - run: bun run build:web
       - run: bun run --filter @specialist/e2e test:e2e
+        env:
+          E2E_REQUIRE_BROWSER: "1"
 
   native:
-    name: native (${{ matrix.os }})
+    name: ${{ matrix.os == 'ubuntu-latest' && 'native (desktop build)' || format('native (desktop build) [{0}]', matrix.os) }}
+    needs: changes
+    if: needs.changes.outputs.native == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -79,16 +109,7 @@ jobs:
       - if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            build-essential \
-            pkg-config \
-            libwebkit2gtk-4.1-dev \
-            libsoup-3.0-dev \
-            libgtk-3-dev \
-            librsvg2-dev \
-            libssl-dev \
-            libdbus-1-dev \
-            libxdo-dev
+          xargs -a tools/system-deps/debian.txt sudo apt-get install -y --no-install-recommends
       - run: rustup toolchain install
       - uses: Swatinem/rust-cache@v2
       - uses: oven-sh/setup-bun@v2
@@ -100,6 +121,8 @@ jobs:
 
   deny:
     name: deny (cargo-deny)
+    needs: changes
+    if: needs.changes.outputs.deny == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -113,7 +136,7 @@ jobs:
   ci:
     name: ci
     if: always()
-    needs: [rust, ts, wasm, native, deny]
+    needs: [changes, rust, ts, wasm, native, deny]
     runs-on: ubuntu-latest
     steps:
       - env:

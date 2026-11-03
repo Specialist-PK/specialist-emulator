@@ -1,14 +1,106 @@
 [
   {
-    "adapter": "CodeLLDB",
-    "label": "CLI: demo",
+    "label": "Web frontend: launch Chromium",
+    "adapter": "JavaScript",
+    "type": "chrome",
     "request": "launch",
-    "program": "$ZED_WORKTREE_ROOT/target/debug/specialist",
-    "args": ["demo"],
-    "cwd": "$ZED_WORKTREE_ROOT",
+    "build": "web: ensure dev server",
+    "url": "http://localhost:5173",
+    "webRoot": "$ZED_WORKTREE_ROOT",
+    "sourceMaps": true
+  },
+  {
+    "label": "Web frontend: launch Chromium (CHROME_PATH)",
+    "adapter": "JavaScript",
+    "type": "chrome",
+    "request": "launch",
+    "build": "web: ensure dev server",
+    "runtimeExecutable": "$CHROME_PATH",
+    "url": "http://localhost:5173",
+    "webRoot": "$ZED_WORKTREE_ROOT",
+    "sourceMaps": true
+  },
+  {
+    "label": "Web frontend: attach Chromium",
+    "adapter": "JavaScript",
+    "type": "chrome",
+    "request": "attach",
+    "url": "http://localhost:5173",
+    "webRoot": "$ZED_WORKTREE_ROOT",
+    "sourceMaps": true,
+    "port": 9222
+  },
+  {
+    "label": "CLI backend: development",
+    "adapter": "CodeLLDB",
+    "request": "launch",
     "build": {
       "command": "cargo",
       "args": ["build", "-p", "specialist-cli"]
-    }
+    },
+    "args": ["demo"],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "sourceLanguages": ["rust"]
+  },
+  {
+    "label": "CLI backend: release",
+    "adapter": "CodeLLDB",
+    "request": "launch",
+    "build": {
+      "command": "cargo",
+      "args": [
+        "build",
+        "-p",
+        "specialist-cli",
+        "--release",
+        "--config",
+        "profile.release.debug=true"
+      ]
+    },
+    "args": ["demo"],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "sourceLanguages": ["rust"]
+  },
+  {
+    "label": "Native backend: development",
+    "adapter": "CodeLLDB",
+    "request": "launch",
+    "build": {
+      "command": "cargo",
+      "args": ["build", "-p", "specialist-native"]
+    },
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "env": {
+      "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": "--remote-debugging-port=9222"
+    },
+    "sourceLanguages": ["rust"]
+  },
+  {
+    "label": "Native backend: release",
+    "adapter": "CodeLLDB",
+    "request": "launch",
+    "build": {
+      "command": "cargo",
+      "args": [
+        "build",
+        "-p",
+        "specialist-native",
+        "--release",
+        "--config",
+        "profile.release.debug=true"
+      ]
+    },
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "sourceLanguages": ["rust"]
+  },
+  {
+    "label": "Native frontend: attach WebView2 (Windows)",
+    "adapter": "JavaScript",
+    "type": "chrome",
+    "request": "attach",
+    "url": "http://localhost:1420",
+    "webRoot": "$ZED_WORKTREE_ROOT",
+    "sourceMaps": true,
+    "port": 9222
   }
 ]

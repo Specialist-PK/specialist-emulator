@@ -1,0 +1,15 @@
+# Architecture Decision Records
+
+[English version](README.md)
+
+Здесь фиксируются значимые решения: контекст, выбранное решение, альтернативы и последствия. Формат и правила описаны в [ADR-0001](0001-record-architecture-decisions.ru.md).
+
+| Номер | Решение | Статус |
+| --- | --- | --- |
+| [0001](0001-record-architecture-decisions.ru.md) | Фиксируем архитектурные решения | Принято |
+| [0002](0002-github-workflow.ru.md) | Процесс issue/branch/PR и защищённый `main` | Принято |
+| [0003](0003-reproducible-development-environment.ru.md) | Воспроизводимое окружение и dev-server для редакторов | Принято |
+| [0004](0004-dependency-boundaries-as-data.ru.md) | Границы объявленных зависимостей как данные | Принято |
+| [0005](0005-ci-os-matrix-gate-and-path-selection.ru.md) | Матрица ОС, aggregate gate и выбор CI по путям | Принято |
+| [0006](0006-dependency-supply-chain-checks.ru.md) | Проверка цепочки поставок Rust-зависимостей | Принято |
+| [0007](0007-web-e2e-in-a-real-browser.ru.md) | Web E2E в настоящем браузере | Принято |

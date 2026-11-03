@@ -6,6 +6,7 @@
     "packages": [
       "apps/*",
       "packages/*",
+      "tools/*",
       "tests/*"
     ],
     "catalog": {
@@ -30,6 +31,8 @@
   "type": "module",
   "scripts": {
     "dev:web": "bun run --filter @specialist/web dev",
+    "dev:web:start": "bun tools/dev-server/src/index.ts start",
+    "dev:web:stop": "bun tools/dev-server/src/index.ts stop",
     "build:web": "bun run --filter @specialist/web build",
     "dev:cli": "cargo run -p specialist-cli --",
     "build:cli": "cargo build -p specialist-cli --release",
@@ -37,7 +40,6 @@
     "test:native": "cargo test -p specialist-native",
     "update:bindings": "UPDATE_BINDINGS=1 cargo test -p specialist-native bindings",
     "test:wasm": "bun run --filter @specialist/core-wasm test:wasm",
-    "test:e2e": "bun run build:web && bun run --filter @specialist/e2e test:e2e",
     "build:wasm": "bun run --filter @specialist/core-wasm build",
     "check:wasm": "bun run --filter @specialist/core-wasm --filter @specialist/web check",
     "dev:native": "bun run --filter @specialist/native tauri dev",
@@ -47,7 +49,11 @@
     "format": "oxfmt && cargo fmt --all",
     "format:check": "oxfmt --check",
     "format:check:rust": "cargo fmt --all --check",
-    "test": "bun run --filter '*' test"
+    "test": "bun run --filter '*' test",
+    "test:e2e": "bun run build:web && bun run --filter @specialist/e2e test:e2e",
+    "doctor": "bun tools/doctor/src/index.ts",
+    "boundaries": "bun tools/boundaries/src/index.ts",
+    "deny": "cargo deny --locked check"
   },
   "devDependencies": {
     "eslint-plugin-solid": "0.18.1",

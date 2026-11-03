@@ -5,59 +5,65 @@ import { fileURLToPath } from "node:url";
 import { chromium, type Browser } from "playwright-core";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-let server: ChildProcess | undefined;
-let browser: Browser | undefined;
+const browserPath = [
+  process.env["CHROME_PATH"],
+  "/usr/bin/chromium",
+  "/usr/bin/chromium-browser",
+  "/usr/bin/google-chrome",
+  "/opt/google/chrome/chrome",
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+].find((path) => path !== undefined && path !== "" && existsSync(path));
+const required = process.env["E2E_REQUIRE_BROWSER"] === "1";
 
-function browserPath(): string | undefined {
-  return [
-    process.env["CHROME_PATH"],
-    "/usr/bin/chromium",
-    "/usr/bin/chromium-browser",
-    "/usr/bin/google-chrome",
-    "/opt/google/chrome/chrome",
-  ].find((path) => path !== undefined && existsSync(path));
+if (browserPath === undefined && !required) {
+  console.warn("E2E skipped: Chrome was not found; set CHROME_PATH to enable it");
 }
 
-beforeAll(async () => {
-  const root = fileURLToPath(new URL("../../..", import.meta.url));
-  server = spawn(
-    "bun",
-    [
-      "run",
-      "--filter",
-      "@specialist/web",
-      "preview",
-      "--",
-      "--host",
-      "127.0.0.1",
-      "--port",
-      "4173",
-      "--strictPort",
-    ],
-    { cwd: root, stdio: "ignore" },
-  );
-  let ready = false;
-  for (let attempt = 0; attempt < 100; attempt += 1) {
-    try {
-      ready = (await fetch("http://127.0.0.1:4173")).ok;
-    } catch {}
-    if (ready) break;
-    await new Promise((resolve) => setTimeout(resolve, 100));
-  }
-  if (!ready) throw new Error("Vite preview did not start");
-  browser = await chromium.launch({
-    executablePath: browserPath(),
-    headless: true,
-    args: ["--no-sandbox"],
+describe.runIf(browserPath !== undefined || required)("web emulator", () => {
+  let server: ChildProcess | undefined;
+  let browser: Browser | undefined;
+
+  beforeAll(async () => {
+    if (browserPath === undefined) throw new Error("Chrome was not found: set CHROME_PATH");
+    const root = fileURLToPath(new URL("../../..", import.meta.url));
+    server = spawn(
+      "bun",
+      [
+        "run",
+        "--filter",
+        "@specialist/web",
+        "preview",
+        "--",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "4173",
+        "--strictPort",
+      ],
+      { cwd: root, stdio: "ignore" },
+    );
+    let ready = false;
+    for (let attempt = 0; attempt < 100; attempt += 1) {
+      try {
+        ready = (await fetch("http://127.0.0.1:4173")).ok;
+      } catch {}
+      if (ready) break;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    if (!ready) throw new Error("Vite preview did not start");
+    browser = await chromium.launch({
+      executablePath: browserPath,
+      headless: true,
+      args: ["--no-sandbox"],
+    });
+  }, 30_000);
+
+  afterAll(async () => {
+    await browser?.close();
+    server?.kill();
   });
-}, 30_000);
 
-afterAll(async () => {
-  await browser?.close();
-  server?.kill();
-});
-
-describe("web emulator", () => {
   it("steps, runs to HLT and loads a binary through the real UI", async () => {
     const page = await browser!.newPage();
     const errors: string[] = [];

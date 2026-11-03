@@ -1,111 +1,135 @@
 # Specialist Emulator
 
-Кроссплатформенный эмулятор советского домашнего компьютера «Специалист». Одно Rust-ядро используется в консольном приложении, браузере через WebAssembly и нативном приложении на Tauri 2.
+[Русская версия](README.ru.md)
 
-Проект основан на архитектурных решениях прототипа [another-useless-app](https://github.com/DrUNE/another-useless-app): независимые сборки, общий UI, тонкие платформенные адаптеры и единый контракт ядра.
+[![CI](https://github.com/Specialist-PK/specialist-emulator/actions/workflows/ci.yml/badge.svg)](https://github.com/Specialist-PK/specialist-emulator/actions/workflows/ci.yml)
 
-## Текущие возможности
+A cross-platform emulator of the Soviet Specialist home computer. One Rust core runs in a console application, in the browser through WebAssembly, and in a Tauri 2 desktop application.
 
-- базовый набор из 256 опкодов Intel 8080, регистры, флаги и порты ввода-вывода;
-- 64 КиБ памяти и пошаговое выполнение инструкций;
-- монохромный экран 384 × 256, видеопамять с адреса `0x9000`;
-- запуск, пауза, сброс и выполнение одной инструкции;
-- отображение регистров, флагов и счётчика циклов;
-- загрузка BIN-файла по указанному адресу;
-- встроенная демонстрационная программа, написанная на i8080 и заполняющая видеопамять;
-- общий Solid-интерфейс для web и desktop;
-- одинаковые сценарии эмуляции через WASM и Tauri IPC.
+The project builds on the architecture and development process of [another-useless-app](https://github.com/DrUNE/another-useless-app): independent builds, shared UI, thin platform adapters, a single core contract, documented decisions, and reproducible checks.
 
-Это ранняя версия ядра, а ещё не полная модель конкретного «Специалиста». Память пока представлена плоским массивом RAM. Monitor ROM, клавиатура, магнитофон, звук, клоны компьютера, точные временные характеристики и DAP-отладчик ещё не реализованы. ROM и программы сторонних авторов не входят в репозиторий.
+## Current capabilities
 
-## Структура
+- Base set of 256 Intel 8080 opcodes, registers, flags, and I/O ports;
+- 64 KiB of memory and instruction stepping;
+- Monochrome 384 × 256 display with video memory at `0x9000`;
+- Run, pause, reset, and single-step controls;
+- Registers, flags, and cycle counter display;
+- BIN loading at a specified address;
+- Built-in i8080 demo that fills video memory;
+- Shared Solid UI for web and desktop;
+- Matching emulation scenarios through WASM and Tauri IPC.
+
+This is an early i8080 core, not yet a complete model of a specific Specialist. Memory is currently a flat RAM array. Monitor ROM, keyboard, tape, sound, computer variants, exact timing, and a DAP debugger are not implemented. Third-party ROMs and programs are not included.
+
+## Structure
 
 ```text
 crates/
-  core/              # i8080, память, машина и демонстрационная программа
-  core-wasm/         # тонкая wasm-bindgen обёртка
-  cli/               # консольный запуск, бинарник specialist
+  core/              # i8080, memory, machine, and demo
+  core-wasm/         # thin wasm-bindgen wrapper
+  cli/               # console application, specialist binary
 apps/
-  web/               # браузерная точка входа: WASM + общий UI
-  native/            # Tauri 2: IPC + общий UI
+  web/               # browser entry point: WASM + shared UI
+  native/            # Tauri 2: IPC + shared UI
 packages/
-  core-api/          # единый TypeScript-контракт эмулятора
-  core-wasm/         # сборка WASM и адаптер контракта
-  app/               # общий Solid-интерфейс
-  config/            # общие настройки TypeScript и Tailwind
+  core-api/          # shared TypeScript Emulator contract
+  core-wasm/         # WASM build and contract adapter
+  app/               # shared Solid UI
+  config/            # shared TypeScript and Tailwind configuration
+tools/
+  ci/                # tested CI job selection
+  doctor/            # environment and repository consistency checks
+  boundaries/        # declared dependency boundary checks
+  dev-server/        # background Vite for editor debugging
+  system-deps/       # single Debian/Ubuntu package list
 ```
 
-Направление зависимостей:
+Dependency direction:
 
 ```text
-CLI и Tauri → specialist-core
-Web         → specialist-core-wasm → specialist-core
-Web и Tauri → общий UI → core-api
+CLI and Tauri → specialist-core
+Web           → specialist-core-wasm → specialist-core
+Web and Tauri → shared UI → core-api
 ```
 
-Ядро не использует файловую систему, DOM, Tauri или другие платформенные API. Браузер и нативное приложение реализуют один интерфейс `Emulator`, поэтому общий UI не знает, где выполняется Rust-код.
+The core does not use filesystem, DOM, Tauri, or other platform APIs. Browser and native implementations share the `Emulator` interface, so the UI does not know where Rust executes. Declared dependency graphs are checked by `bun run boundaries`.
 
-## Документация
+## Development environment
 
-- [Архитектура](docs/architecture.md) — текущие компоненты, границы ядра, целевая модель машины и отладочная схема.
-- [Дорожная карта](docs/roadmap.md) — этапы развития и критерии готовности.
-- [Specialist Zed](https://github.com/Specialist-PK/specialist-zed) — отдельный репозиторий расширения для DAP-отладки в Zed.
+Rust, bun, and `wasm-bindgen-cli` are required for web builds. Desktop additionally requires Tauri system dependencies.
 
-## Подготовка окружения
-
-Нужны Rust, bun и `wasm-bindgen-cli` для web-сборки. Desktop дополнительно требует системные зависимости Tauri.
-
-```bash
+```sh
 rustup toolchain install
 bun install
-cargo install wasm-bindgen-cli --locked --version 0.2.130
+bun run doctor
 ```
 
-Версии Rust и bun закреплены в `rust-toolchain.toml` и `package.json`.
+Versions have one source: `rust-toolchain.toml`, `package.json`, `Cargo.lock`, and `tools/system-deps/debian.txt`. On Debian/Ubuntu, desktop packages can be installed with:
 
-## Запуск и сборка
+```sh
+xargs -a tools/system-deps/debian.txt sudo apt-get install -y --no-install-recommends
+```
 
-```bash
-# Консольная демонстрация: выполнить до HLT и показать состояние CPU
+Alternatively, open the repository in the provided devcontainer. It contains Rust, WASM, bun, and native build dependencies. Graphical Tauri windows, macOS/Windows builds, and browser E2E still require the host or additional tools.
+
+## Run and build
+
+```sh
+# Console demo: run to HLT and print CPU state
 cargo run -p specialist-cli -- demo
 
-# Загрузить собственный бинарник; адреса можно писать в hex
+# Load a binary; addresses accept decimal or 0x-prefixed hexadecimal values
 cargo run -p specialist-cli -- run program.bin 0x0000 0x0000 200000
 
-# Браузерная версия
+# Browser
 bun run dev:web
 bun run build:web
 
-# Нативное окно Tauri
+# Native Tauri window
 bun run dev:native
 
-# Релизная сборка нативного приложения без создания установочных пакетов
+# Native release build without installers
 bun run build:native -- --no-bundle
 ```
 
-WebAssembly генерируется в `packages/core-wasm/pkg`; этот каталог не коммитится. Для повторного использования ядра в другой web-странице предназначены пакеты `@specialist/core-wasm` и `@specialist/app`; публикация самостоятельного npm-пакета пока не настроена.
+WebAssembly is generated into `packages/core-wasm/pkg`; this directory is not committed. The reusable web packages are `@specialist/core-wasm` and `@specialist/app`; standalone npm publishing is not configured.
 
-## Проверки
+## Editors and debugging
 
-```bash
-bun run test:rust       # тесты ядра, CLI и WASM-крейта без Tauri
-bun run test:native     # реальный Tauri IPC и актуальность TS-привязок
-bun run test:wasm       # выполнение демонстрации в настоящем WASM
-bun run test:e2e        # Chromium: шаг, запуск до HLT и загрузка BIN через UI
-bun run test            # TypeScript-тесты
+Workspace settings are provided for VS Code (`.vscode/`) and Zed (`.zed/`). Both use local Oxc/Oxfmt and rust-analyzer. Recommended VS Code extensions are also included in the devcontainer.
+
+Shared tasks and scenarios cover Chromium, CLI, and native debugging; VS Code additionally supports Firefox. Web launch scenarios call `web: ensure dev server`: they build WASM, reuse or start Vite, wait for readiness, and leave it running for later sessions. Stop it with `web: stop dev server` or `bun run dev:web:stop`.
+
+Before native development debugging, run `native: dev server`. For a native release scenario in Zed, run `native: build frontend` first; VS Code runs it through `preLaunchTask`. CLI development and release scenarios run the built-in demo through CodeLLDB with debug symbols enabled.
+
+An emulator-internal DAP adapter remains a future architectural step.
+
+## Checks
+
+```sh
+bun run test:rust       # Rust tests without Tauri
+bun run test:native     # real Tauri IPC and generated binding freshness
+bun run test:wasm       # demo execution in real WASM
+bun run test:e2e        # Chromium: step, run to HLT, and load BIN through UI
+bun run test            # TypeScript and tooling tests
 bun run typecheck
-bun run check:wasm      # WASM + типы зависимого web-кода
+bun run check:wasm      # WASM plus dependent web types
+bun run boundaries      # declared Rust and TypeScript dependency graphs
+bun run deny            # Rust advisories, licenses, bans, and sources
 bun run lint
 bun run format:check
 bun run format:check:rust
 ```
 
-После изменения команд Tauri TypeScript-привязки обновляются командой `bun run update:bindings` и коммитятся. Файл `apps/native/src/bindings.ts` вручную не редактируется.
+After changing Tauri commands, regenerate `apps/native/src/bindings.ts` with `bun run update:bindings`; do not edit it manually.
 
-## Отладка в Zed
+E2E uses an installed browser and supports `CHROME_PATH`. Without a browser it skips locally; CI sets `E2E_REQUIRE_BROWSER=1`, making a missing browser an error.
 
-В `.zed/debug.json` есть сценарий `CLI: demo` для отладки нативного ядра через CodeLLDB. Он собирает консольное приложение и запускает встроенную демонстрацию. Отладка программы внутри эмулятора через собственный DAP-адаптер — следующий архитектурный этап.
+## Roadmap and process
 
-## Лицензия
+Plans live in the pinned [Roadmap issue](https://github.com/Specialist-PK/specialist-emulator/issues/1) and linked issues. Work follows issue → branch → pull request (`Closes #N`) → squash merge after the aggregate `ci` check. Details for people and agents are in [AGENTS.md](AGENTS.md). Significant decisions are recorded in [`docs/adr/`](docs/adr/README.md).
 
-MIT. См. [LICENSE](LICENSE).
+## License
+
+MIT. See [LICENSE](LICENSE).

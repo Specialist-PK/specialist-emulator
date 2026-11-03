@@ -1,0 +1,123 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Web frontend: launch Chromium",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}",
+      "sourceMaps": true,
+      "preLaunchTask": "web: ensure dev server"
+    },
+    {
+      "name": "Web frontend: launch Chromium (CHROME_PATH)",
+      "type": "chrome",
+      "request": "launch",
+      "runtimeExecutable": "${env:CHROME_PATH}",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}",
+      "sourceMaps": true,
+      "preLaunchTask": "web: ensure dev server"
+    },
+    {
+      "name": "Web frontend: attach Chromium",
+      "type": "chrome",
+      "request": "attach",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}",
+      "sourceMaps": true,
+      "port": 9222
+    },
+    {
+      "name": "Web frontend: launch Firefox",
+      "type": "firefox",
+      "request": "launch",
+      "reAttach": true,
+      "url": "http://localhost:5173/",
+      "webRoot": "${workspaceFolder}",
+      "preLaunchTask": "web: ensure dev server"
+    },
+    {
+      "name": "Web frontend: attach Firefox",
+      "type": "firefox",
+      "request": "attach",
+      "url": "http://localhost:5173/",
+      "webRoot": "${workspaceFolder}",
+      "port": 6000
+    },
+    {
+      "name": "CLI backend: development",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": ["build", "-p", "specialist-cli"],
+        "filter": { "name": "specialist", "kind": "bin" }
+      },
+      "args": ["demo"],
+      "cwd": "${workspaceFolder}",
+      "sourceLanguages": ["rust"]
+    },
+    {
+      "name": "CLI backend: release",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": [
+          "build",
+          "-p",
+          "specialist-cli",
+          "--release",
+          "--config",
+          "profile.release.debug=true"
+        ],
+        "filter": { "name": "specialist", "kind": "bin" }
+      },
+      "args": ["demo"],
+      "cwd": "${workspaceFolder}",
+      "sourceLanguages": ["rust"]
+    },
+    {
+      "name": "Native backend: development",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": ["build", "-p", "specialist-native"],
+        "filter": { "name": "specialist-native", "kind": "bin" }
+      },
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": "--remote-debugging-port=9222"
+      },
+      "sourceLanguages": ["rust"]
+    },
+    {
+      "name": "Native backend: release",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": [
+          "build",
+          "-p",
+          "specialist-native",
+          "--release",
+          "--config",
+          "profile.release.debug=true"
+        ],
+        "filter": { "name": "specialist-native", "kind": "bin" }
+      },
+      "cwd": "${workspaceFolder}",
+      "sourceLanguages": ["rust"],
+      "preLaunchTask": "native: build frontend"
+    },
+    {
+      "name": "Native frontend: attach WebView2 (Windows)",
+      "type": "chrome",
+      "request": "attach",
+      "url": "http://localhost:1420",
+      "webRoot": "${workspaceFolder}",
+      "sourceMaps": true,
+      "port": 9222
+    }
+  ]
+}
