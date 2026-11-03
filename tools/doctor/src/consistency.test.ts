@@ -1,0 +1,139 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+
+import { describe, expect, it } from "vitest";
+
+import { packageManagerVersion, readPackageList, toolchainChannel } from "./parse";
+
+// Версии живут в нескольких файлах (package.json, devcontainer, CI). Этот тест ловит расхождение до того,
+// как оно проявится как «у меня работает».
+const root = join(import.meta.dirname, "../../..");
+const read = (path: string) => readFileSync(join(root, path), "utf8");
+
+const legacyRussianDocs = new Set(["docs/architecture.md", "docs/roadmap.md"]);
+
+function markdownFiles(directory: string): string[] {
+  return readdirSync(join(root, directory), { withFileTypes: true }).flatMap((entry) => {
+    const path = join(directory, entry.name).replaceAll("\\", "/");
+    if (entry.isDirectory()) return markdownFiles(path);
+    return entry.name.endsWith(".md") ? [path] : [];
+  });
+}
+
+describe("documentation languages", () => {
+  it("requires English and Russian versions of every document", () => {
+    const documents = [
+      "README.md",
+      "README.ru.md",
+      "AGENTS.md",
+      "AGENTS.ru.md",
+      ...markdownFiles("docs"),
+    ];
+    for (const document of documents) {
+      if (document.endsWith(".ru.md")) {
+        expect(documents, document).toContain(document.replace(/\.ru\.md$/, ".md"));
+      } else if (!legacyRussianDocs.has(document)) {
+        expect(documents, document).toContain(document.replace(/\.md$/, ".ru.md"));
+      }
+    }
+  });
+});
+
+describe("version pins agree across the repository", () => {
+  it("devcontainer builds with the same bun as packageManager", () => {
+    const devcontainer = JSON.parse(read(".devcontainer/devcontainer.json")) as {
+      build: { args: { BUN_VERSION: string } };
+    };
+    expect(devcontainer.build.args.BUN_VERSION).toBe(packageManagerVersion(read("package.json")));
+  });
+
+  it("devcontainer and workspace recommend the same VS Code extensions", () => {
+    const devcontainer = JSON.parse(read(".devcontainer/devcontainer.json")) as {
+      customizations: { vscode: { extensions: string[] } };
+    };
+    const workspace = JSON.parse(read(".vscode/extensions.json")) as { recommendations: string[] };
+    expect(devcontainer.customizations.vscode.extensions.toSorted()).toEqual(
+      workspace.recommendations.toSorted(),
+    );
+  });
+
+  it("Rust is pinned to an exact version, not a floating channel", () => {
+    expect(toolchainChannel(read("rust-toolchain.toml"))).toMatch(/^\d+\.\d+\.\d+$/);
+  });
+
+  it("CI takes versions from the files instead of hard-coding them", () => {
+    const ci = read(".github/workflows/ci.yml");
+    expect(ci).not.toMatch(/bun-version:\s*\d/);
+    expect(ci).not.toContain("dtolnay/rust-toolchain");
+    expect(ci).toContain("bun-version-file: package.json");
+    expect(ci).toContain("tools/system-deps/debian.txt");
+  });
+
+  it("CI and the image share one system package list", () => {
+    expect(read(".devcontainer/Dockerfile")).toContain("tools/system-deps/debian.txt");
+    expect(readPackageList(read("tools/system-deps/debian.txt"))).toContain(
+      "libwebkit2gtk-4.1-dev",
+    );
+  });
+  it("both workflows run the same cargo-deny", () => {
+    const pinned = (file: string) => /cargo-deny@([\d.]+)/.exec(read(file))?.[1];
+    expect(pinned(".github/workflows/ci.yml")).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(pinned(".github/workflows/audit.yml")).toBe(pinned(".github/workflows/ci.yml"));
+  });
+
+  it("every advisory exception in deny.toml states a reason", () => {
+    const exceptions = read("deny.toml")
+      .split("\n")
+      .filter((line) => line.includes('{ id = "RUSTSEC-'));
+    expect(exceptions.length).toBeGreaterThan(0);
+    for (const line of exceptions) expect(line, line).toMatch(/reason = ".{20,}"/);
+  });
+  it("VS Code and Zed keep shared debug scenarios and tasks in sync", () => {
+    const vscodeLaunch = JSON.parse(read(".vscode/launch.json")) as {
+      configurations: Array<{ name: string; request: string; preLaunchTask?: string }>;
+    };
+    const zedDebug = JSON.parse(read(".zed/debug.json")) as Array<{
+      label: string;
+      request: string;
+      adapter?: string;
+      build?: string | { command: string };
+    }>;
+    const vscodeNames = vscodeLaunch.configurations.map((config) => config.name);
+    for (const config of zedDebug) {
+      expect(vscodeNames).toContain(config.label);
+      if (config.adapter === "CodeLLDB" && typeof config.build === "object")
+        expect(config.build.command).toBe("cargo");
+      if (config.label.startsWith("Web frontend:")) {
+        expect(config.build === "web: ensure dev server").toBe(config.request === "launch");
+      }
+    }
+    for (const config of vscodeLaunch.configurations) {
+      if (config.name.startsWith("Web frontend:")) {
+        expect(config.preLaunchTask === "web: ensure dev server").toBe(config.request === "launch");
+      }
+    }
+    expect(vscodeNames).toContain("Web frontend: launch Firefox");
+    expect(vscodeNames).toContain("Web frontend: attach Firefox");
+
+    const vscodeTasks = JSON.parse(read(".vscode/tasks.json")) as {
+      tasks: Array<{ label: string }>;
+    };
+    const zedTasks = JSON.parse(read(".zed/tasks.json")) as Array<{ label: string }>;
+    expect(vscodeTasks.tasks.map((task) => task.label).toSorted()).toEqual(
+      zedTasks.map((task) => task.label).toSorted(),
+    );
+  });
+
+  it("the MIT license is in place and every manifest declares it", () => {
+    const mit = read("LICENSE");
+    expect(mit).toMatch(/^MIT License\n/);
+    expect(mit).toContain("Copyright (c) 2026 Specialist-PK contributors");
+    expect(mit).toContain("Permission is hereby granted, free of charge");
+
+    expect(read("Cargo.toml")).toMatch(/^license = "MIT"$/m);
+    expect(JSON.parse(read("package.json")).license).toBe("MIT");
+    const crates = ["crates/core", "crates/cli", "crates/core-wasm", "apps/native/src-tauri"];
+    for (const crate of crates)
+      expect(read(`${crate}/Cargo.toml`), crate).toContain("license.workspace = true");
+  });
+});

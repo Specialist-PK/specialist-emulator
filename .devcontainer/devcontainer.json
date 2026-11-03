@@ -1,0 +1,28 @@
+{
+  "name": "specialist-emulator",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "..",
+    "args": { "BUN_VERSION": "1.4.4" }
+  },
+  "remoteUser": "vscode",
+  "mounts": [
+    "source=specialist-emulator-target,target=${containerWorkspaceFolder}/target,type=volume",
+    "source=specialist-emulator-node-modules,target=${containerWorkspaceFolder}/node_modules,type=volume",
+    "source=specialist-emulator-cargo-registry,target=/usr/local/cargo/registry,type=volume"
+  ],
+  "postCreateCommand": "sudo chown -R vscode:vscode target node_modules /usr/local/cargo/registry && bun install --frozen-lockfile && bun run doctor",
+  "forwardPorts": [5173, 4173],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "rust-lang.rust-analyzer",
+        "oxc.oxc-vscode",
+        "bradlc.vscode-tailwindcss",
+        "tauri-apps.tauri-vscode",
+        "vadimcn.vscode-lldb",
+        "firefox-devtools.vscode-firefox-debug"
+      ]
+    }
+  }
+}

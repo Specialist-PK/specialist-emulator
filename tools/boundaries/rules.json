@@ -1,0 +1,62 @@
+{
+  "rust": [
+    {
+      "crate": "specialist-core",
+      "target": "host",
+      "directOnly": ["thiserror"],
+      "why": "ADR-0004: ядро не получает платформенных зависимостей и продолжает собираться под wasm32"
+    },
+    {
+      "crate": "specialist-cli",
+      "target": "host",
+      "forbidTransitive": ["tauri", "wry", "wasm-bindgen", "js-sys", "web-sys"],
+      "why": "ADR-0004: CLI не зависит от Tauri и браузерной обвязки"
+    },
+    {
+      "crate": "specialist-native",
+      "target": "host",
+      "forbidTransitive": ["wasm-bindgen", "js-sys", "web-sys"],
+      "why": "ADR-0004: нативное приложение использует ядро напрямую, без WASM"
+    },
+    {
+      "crate": "specialist-core-wasm",
+      "target": "wasm32-unknown-unknown",
+      "directOnly": ["specialist-core", "serde", "serde-wasm-bindgen", "js-sys", "wasm-bindgen"],
+      "forbidTransitive": ["tokio", "reqwest", "hyper", "tauri", "wry", "mio"],
+      "why": "ADR-0004: WASM-крейт остаётся тонкой границей без платформенной логики"
+    }
+  ],
+  "ts": [
+    {
+      "package": "@specialist/core-api",
+      "directOnly": [],
+      "why": "ADR-0004: контракт Emulator не зависит от UI и платформ"
+    },
+    {
+      "package": "@specialist/core-wasm",
+      "directOnly": ["@specialist/core-api"],
+      "why": "ADR-0004: WASM-адаптер зависит только от контракта"
+    },
+    {
+      "package": "@specialist/app",
+      "directOnly": ["@specialist/core-api", "@solidjs/web", "solid-js"],
+      "forbidTransitive": [
+        "@tauri-apps/*",
+        "@specialist/core-wasm",
+        "@specialist/web",
+        "@specialist/native"
+      ],
+      "why": "ADR-0004: общий UI знает только контракт ядра и Solid"
+    },
+    {
+      "package": "@specialist/web",
+      "forbidTransitive": ["@tauri-apps/*", "@specialist/native"],
+      "why": "ADR-0004: web не зависит от Tauri и нативного приложения"
+    },
+    {
+      "package": "@specialist/native",
+      "forbidTransitive": ["@specialist/core-wasm", "@specialist/web"],
+      "why": "ADR-0004: native не зависит от WASM-адаптера и web"
+    }
+  ]
+}
