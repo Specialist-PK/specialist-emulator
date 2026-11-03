@@ -1,37 +1,37 @@
-# 0002. Issue/branch/PR workflow and protected `main`
+# 0002. Процесс issue/branch/PR и защищённый `main`
 
-[Русская версия](0002-github-workflow.ru.md)
+[English version](0002-github-workflow.en.md)
 
-Status: accepted (2026-11-03)
+Статус: принято (2026-11-03)
 
-## Context
+## Контекст
 
-The initial changes went directly to `main` and combined independent ideas. The upstream process instead makes plans visible, separates reviewable units, and requires green cross-platform checks before merging.
+Первоначальные изменения попадали прямо в `main` и объединяли независимые идеи. Процесс апстрима делает планы видимыми, разделяет проверяемые единицы работы и требует зелёные кроссплатформенные проверки перед слиянием.
 
-## Decision
+## Решение
 
-Work follows this sequence:
+Работа следует последовательности:
 
-1. every task starts with a Task or Bug issue linked to the pinned Roadmap;
-2. one branch per issue is created from fresh `main` using `<type>/<summary>`;
-3. commits are small English Conventional Commits, one idea each;
-4. a pull request fills the template, includes `Closes #N`, uses an English title and Russian description, and lists unverified items;
-5. only squash merge is allowed after the aggregate `ci` check passes; merged branches are deleted automatically.
+1. каждая задача начинается с Task или Bug issue, связанной с закреплённым Roadmap;
+2. для issue создаётся одна ветка от свежего `main` с именем `<type>/<summary>`;
+3. коммиты небольшие, английские Conventional Commits, одна идея в каждом;
+4. pull request заполняет шаблон, содержит `Closes #N`, английский заголовок, русское описание и честный список непроверенного;
+5. разрешён только squash merge после зелёного aggregate `ci`; влитые ветки удаляются автоматически.
 
-GitHub settings enforce the process: pull requests are required for `main`, `ci` is the only required status check, admins are included, linear history and conversation resolution are required, force-push and branch deletion are disabled. Merge commits and rebase merges are disabled. No approvals are required while the repository has one maintainer.
+Настройки GitHub закрепляют процесс: для `main` обязателен PR, `ci` — единственная обязательная проверка, правила действуют на администраторов, требуются линейная история и разрешение обсуждений, force-push и удаление ветки запрещены. Merge-коммиты и rebase merge отключены. Пока у репозитория один maintainer, одобрения не требуются.
 
-Agent confirmation rules still apply: following the process does not implicitly authorize a merge.
+Правила подтверждения для агента сохраняются: следование процессу не даёт неявного разрешения на merge.
 
-## Alternatives
+## Альтернативы
 
-- **Direct work on `main`.** Faster for one change, but loses review boundaries and makes broken cross-platform states visible only after publication.
-- **Convention without GitHub enforcement.** Easier to configure, but can be violated accidentally.
-- **Required approvals.** Valuable for a team, but self-approval is impossible for a solo maintainer.
-- **Require up-to-date branches.** Stronger freshness, but unnecessary repeated CI for a small solo project.
+- **Прямая работа в `main`.** Быстрее для одного изменения, но теряет границы проверки и показывает кроссплатформенные ошибки только после публикации.
+- **Договорённость без настроек GitHub.** Проще настроить, но случайно нарушить можно.
+- **Обязательные одобрения.** Полезно команде, но самоодобрение для одного maintainer невозможно.
+- **Требование актуальной ветки.** Строже, но ведёт к повторным CI для небольшого личного проекта.
 
-## Consequences
+## Последствия
 
-- (+) Plans, implementation, checks, and history form one traceable process.
-- (+) Adding CI jobs or operating systems does not require branch-protection changes.
-- (−) Even small fixes need an issue, branch, and PR.
-- (−) Repository settings must be recreated if the project is moved.
+- (+) Планы, реализация, проверки и история образуют прослеживаемый процесс.
+- (+) Добавление CI jobs и ОС не требует изменения защиты ветки.
+- (−) Даже небольшое исправление требует issue, ветку и PR.
+- (−) Настройки репозитория придётся воссоздать при переносе проекта.

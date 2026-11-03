@@ -1,31 +1,31 @@
-# 0003. Reproducible environment and editor dev-server
+# 0003. Воспроизводимое окружение и dev-server для редакторов
 
-[Русская версия](0003-reproducible-development-environment.ru.md)
+[English version](0003-reproducible-development-environment.en.md)
 
-Status: accepted (2026-11-03)
+Статус: принято (2026-11-03)
 
-## Context
+## Контекст
 
-The project needs Rust, bun, a matching `wasm-bindgen-cli`, and native libraries. Duplicating versions and packages across CI, documentation, and editor configuration leads to drift. Browser debugging also needs a running Vite server; manual startup made the ported editor configuration behave differently from upstream.
+Проекту нужны Rust, bun, совпадающий `wasm-bindgen-cli` и нативные библиотеки. Дублирование версий и пакетов в CI, документации и настройках редакторов ведёт к расхождениям. Браузерной отладке нужен запущенный Vite; ручной запуск менял поведение конфигурации по сравнению с апстримом.
 
-## Decision
+## Решение
 
-Use one source for each environment input: `rust-toolchain.toml` for Rust, `package.json` for bun, `Cargo.lock` for wasm-bindgen, `tools/system-deps/debian.txt` for Debian packages, and matching workflow pins for cargo-deny.
+Для каждого входа окружения используется один источник: `rust-toolchain.toml` для Rust, `package.json` для bun, `Cargo.lock` для wasm-bindgen, `tools/system-deps/debian.txt` для пакетов Debian и совпадающие закреплённые версии cargo-deny в workflow.
 
-`tools/doctor` checks the environment without installing anything and runs repository consistency tests. The optional `.devcontainer/` uses the same package list and toolchain files, with named volumes for artifacts.
+`tools/doctor` проверяет окружение без установки и запускает тесты согласованности репозитория. Необязательный `.devcontainer/` использует тот же список пакетов и файлы тулчейна, с именованными томами для артефактов.
 
-`tools/dev-server` provides `dev:web:start` and `dev:web:stop`. It reuses a healthy server, builds WASM before starting Vite, waits for readiness, stores PID and logs under `target/`, and leaves the server running for subsequent debugger sessions. Zed and VS Code launch scenarios call the same task; attach scenarios do not manage the server.
+`tools/dev-server` предоставляет `dev:web:start` и `dev:web:stop`. Он переиспользует работающий сервер, собирает WASM перед запуском Vite, ждёт готовности, хранит PID и логи в `target/` и оставляет сервер для следующих сессий отладки. Сценарии launch в Zed и VS Code вызывают одну задачу; attach не управляет сервером.
 
-## Alternatives
+## Альтернативы
 
-- **Duplicate setup instructions.** Simple initially, but versions and packages diverge.
-- **Devcontainer only.** Reproducible Linux environment, but no native window or macOS/Windows host builds.
-- **Manual Vite startup.** Less tooling, but unreliable and inconsistent editor launches.
-- **Start a new server for every debug session.** Isolation is unnecessary here and causes port conflicts and repeated WASM builds.
+- **Дублировать инструкции.** Просто вначале, но версии и пакеты расходятся.
+- **Только devcontainer.** Воспроизводимый Linux, но нет нативного окна и сборок на macOS/Windows.
+- **Ручной запуск Vite.** Меньше инструментов, но ненадёжный и неодинаковый запуск из редакторов.
+- **Новый сервер на каждую сессию.** Изоляция здесь не нужна, а конфликты портов и повторные сборки WASM неизбежны.
 
-## Consequences
+## Последствия
 
-- (+) CI, local setup, container, and editors use consistent inputs.
-- (+) Browser debugging works with one launch action and reuses existing work.
-- (−) The helper and consistency tests need maintenance as the workspace evolves.
-- (−) The container is large and does not replace host-specific verification.
+- (+) CI, локальная настройка, контейнер и редакторы используют согласованные входы.
+- (+) Браузерная отладка запускается одним действием и переиспользует существующую работу.
+- (−) Помощник и consistency-тесты нужно поддерживать при развитии workspace.
+- (−) Контейнер большой и не заменяет проверки на хосте.

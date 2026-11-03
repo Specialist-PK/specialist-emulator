@@ -10,8 +10,6 @@ import { packageManagerVersion, readPackageList, toolchainChannel } from "./pars
 const root = join(import.meta.dirname, "../../..");
 const read = (path: string) => readFileSync(join(root, path), "utf8");
 
-const legacyRussianDocs = new Set(["docs/architecture.md", "docs/roadmap.md"]);
-
 function markdownFiles(directory: string): string[] {
   return readdirSync(join(root, directory), { withFileTypes: true }).flatMap((entry) => {
     const path = join(directory, entry.name).replaceAll("\\", "/");
@@ -21,19 +19,21 @@ function markdownFiles(directory: string): string[] {
 }
 
 describe("documentation languages", () => {
-  it("requires English and Russian versions of every document", () => {
+  it("requires a canonical Russian document and an English companion", () => {
     const documents = [
       "README.md",
-      "README.ru.md",
+      "README.en.md",
       "AGENTS.md",
-      "AGENTS.ru.md",
+      "AGENTS.en.md",
+      ".github/PULL_REQUEST_TEMPLATE.md",
+      ".github/PULL_REQUEST_TEMPLATE.en.md",
       ...markdownFiles("docs"),
     ];
     for (const document of documents) {
-      if (document.endsWith(".ru.md")) {
-        expect(documents, document).toContain(document.replace(/\.ru\.md$/, ".md"));
-      } else if (!legacyRussianDocs.has(document)) {
-        expect(documents, document).toContain(document.replace(/\.md$/, ".ru.md"));
+      if (document.endsWith(".en.md")) {
+        expect(documents, document).toContain(document.replace(/\.en\.md$/, ".md"));
+      } else {
+        expect(documents, document).toContain(document.replace(/\.md$/, ".en.md"));
       }
     }
   });

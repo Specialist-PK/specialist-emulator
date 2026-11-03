@@ -1,30 +1,30 @@
-# 0006. Rust dependency supply-chain checks
+# 0006. Проверка цепочки поставок Rust-зависимостей
 
-[Русская версия](0006-dependency-supply-chain-checks.ru.md)
+[English version](0006-dependency-supply-chain-checks.en.md)
 
-Status: accepted (2026-11-03)
+Статус: принято (2026-11-03)
 
-## Context
+## Контекст
 
-Tauri brings a large transitive Rust graph that cannot be reviewed manually. Vulnerability records appear without code changes, while license, source, and banned-crate policies need repeatable enforcement.
+Tauri приносит большой транзитивный Rust-граф, который невозможно просмотреть вручную. Записи об уязвимостях появляются без изменений кода, а политика лицензий, источников и запрещённых крейтов требует воспроизводимого применения.
 
-## Decision
+## Решение
 
-Use `cargo-deny` through `bun run deny` and `deny.toml` for advisories, licenses, bans, and sources.
+Используется `cargo-deny` через `bun run deny` и `deny.toml` для advisories, licenses, bans и sources.
 
-Yanked releases are denied. Every advisory exception has a reason. The license allowlist permits the project's permissive dependencies and MPL-2.0; private workspace crates also declare MIT. OpenSSL, `openssl-sys`, and `native-tls` are forbidden in favor of rustls. Registry and git sources outside crates.io are forbidden. Duplicate crate versions produce warnings rather than failures.
+Yanked-релизы запрещены. У каждого исключения advisories есть причина. Список лицензий разрешает permissive-зависимости и MPL-2.0; приватные крейты workspace также объявляют MIT. OpenSSL, `openssl-sys` и `native-tls` запрещены в пользу rustls. Реестры и git-источники вне crates.io запрещены. Дубликаты версий дают предупреждения, а не ошибки.
 
-CI runs the full check when Cargo manifests, the lockfile, `deny.toml`, or workflows change. A separate weekly `audit.yml` checks advisories and supports manual dispatch. Both workflows use the same pinned cargo-deny version, enforced by a consistency test.
+CI запускает полную проверку при изменении Cargo-манифестов, lockfile, `deny.toml` или workflow. Отдельный еженедельный `audit.yml` проверяет advisories и поддерживает ручной запуск. Оба workflow используют одинаковую закреплённую версию cargo-deny, контролируемую consistency-тестом.
 
-## Alternatives
+## Альтернативы
 
-- **cargo-audit only.** Covers advisories but not licenses, banned crates, and sources.
-- **Dependabot or Renovate.** Helps updates but does not define project policy.
-- **Hide all unmaintained warnings.** Less noise, but loses potentially important dependency information.
+- **Только cargo-audit.** Проверяет advisories, но не лицензии, запреты и источники.
+- **Dependabot или Renovate.** Помогает обновлениям, но не задаёт политику проекта.
+- **Скрыть все unmaintained-предупреждения.** Меньше шума, но теряется полезная информация о зависимостях.
 
-## Consequences
+## Последствия
 
-- (+) Dependency policy is executable locally and in CI, including newly published advisories.
-- (+) Exceptions are explicit and reviewed alongside code.
-- (−) Advisory checks require network access and scheduled workflows can be disabled after repository inactivity.
-- (−) JavaScript dependencies and dependency update automation are outside this decision.
+- (+) Политика зависимостей выполняется локально и в CI, включая новые записи RUSTSEC.
+- (+) Исключения явные и рассматриваются вместе с кодом.
+- (−) Проверка advisories требует сети, а расписания GitHub может отключить после неактивности репозитория.
+- (−) JavaScript-зависимости и автоматизация обновлений не входят в это решение.
