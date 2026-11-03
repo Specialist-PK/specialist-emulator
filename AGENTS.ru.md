@@ -112,6 +112,10 @@ cargo run -p specialist-cli -- run program.bin 0x0000 0x0000 200000
 
 Общие сценарии и задачи VS Code и Zed должны оставаться синхронизированными. Web launch вызывает `web: ensure dev server`; attach не запускает и не останавливает сервер. Помощник переиспользует существующий сервер, перед новым запуском собирает WASM, ждёт готовности и оставляет сервер для следующих сессий. Остановка — `web: stop dev server`.
 
+## Deployment
+
+`.github/workflows/deploy.yml` публикует web-эмулятор на GitHub Pages после push в `main` и при ручном запуске. Pull requests выполняют production-сборку с base Pages и браузерный E2E, но не должны включать Pages или выполнять deploy. Permissions остаются на уровне jobs, очередь `pages` не отменяет текущий deployment, а Vite `base` вычисляется через `actions/configure-pages`, без захардкоженного имени репозитория. См. ADR-0008.
+
 ## GitHub workflow
 
 Работа идёт через issues и pull requests. GitHub Issues — источник планов; закреплённый Roadmap issue даёт общий обзор.

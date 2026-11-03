@@ -15,6 +15,7 @@ const browserPath = [
   "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
 ].find((path) => path !== undefined && path !== "" && existsSync(path));
 const required = process.env["E2E_REQUIRE_BROWSER"] === "1";
+const baseUrl = new URL(process.env["BASE_PATH"] ?? "/", "http://127.0.0.1:4173").href;
 
 if (browserPath === undefined && !required) {
   console.warn("E2E skipped: Chrome was not found; set CHROME_PATH to enable it");
@@ -46,7 +47,7 @@ describe.runIf(browserPath !== undefined || required)("web emulator", () => {
     let ready = false;
     for (let attempt = 0; attempt < 100; attempt += 1) {
       try {
-        ready = (await fetch("http://127.0.0.1:4173")).ok;
+        ready = (await fetch(baseUrl)).ok;
       } catch {}
       if (ready) break;
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -68,7 +69,7 @@ describe.runIf(browserPath !== undefined || required)("web emulator", () => {
     const page = await browser!.newPage();
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
-    await page.goto("http://127.0.0.1:4173");
+    await page.goto(baseUrl);
     await page.getByRole("button", { name: "Шаг" }).waitFor();
     await page.waitForFunction(() => document.querySelector("dl")?.textContent?.includes("PC0000"));
 

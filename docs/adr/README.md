@@ -13,3 +13,4 @@ This directory records significant decisions: context, chosen solution, alternat
 | [0005](0005-ci-os-matrix-gate-and-path-selection.md) | CI OS matrix, aggregate gate, and path selection | Accepted |
 | [0006](0006-dependency-supply-chain-checks.md) | Rust dependency supply-chain checks | Accepted |
 | [0007](0007-web-e2e-in-a-real-browser.md) | Web E2E in a real browser | Accepted |
+| [0008](0008-github-pages-deployment.md) | GitHub Pages deployment after merging into `main` | Accepted |
