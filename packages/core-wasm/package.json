@@ -1,0 +1,23 @@
+{
+  "name": "@specialist/core-wasm",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "cargo build -p specialist-core-wasm --target wasm32-unknown-unknown --release && wasm-bindgen --target web --out-dir pkg --out-name specialist_core_wasm ../../target/wasm32-unknown-unknown/release/specialist_core_wasm.wasm",
+    "check": "bun run build && tsc -p tsconfig.json",
+    "test": "vitest run --passWithNoTests --exclude \"**/*.wasm.test.ts\"",
+    "test:wasm": "bun run build && vitest run .wasm.test.ts"
+  },
+  "dependencies": {
+    "@specialist/core-api": "workspace:*"
+  },
+  "devDependencies": {
+    "@specialist/config": "workspace:*",
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

@@ -1,0 +1,14 @@
+[workspace]
+resolver = "3"
+members = ["crates/*", "apps/native/src-tauri"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+publish = false
+license = "MIT"
+
+[workspace.dependencies]
+specialist-core = { path = "crates/core" }
+serde = { version = "1", features = ["derive"] }
+thiserror = "2"

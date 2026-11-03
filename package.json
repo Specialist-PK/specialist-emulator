@@ -1,0 +1,60 @@
+{
+  "name": "specialist-emulator",
+  "private": true,
+  "license": "MIT",
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*",
+      "tests/*"
+    ],
+    "catalog": {
+      "solid-js": "2.0.0-rc.20",
+      "@solidjs/web": "2.0.0-rc.20",
+      "@solidjs/vite-plugin": "3.0.0-next.54",
+      "vite": "8.3.5",
+      "tailwindcss": "4.3.3",
+      "@tailwindcss/vite": "4.3.3",
+      "typescript": "7.0.2",
+      "vitest": "5.0.5",
+      "@tauri-apps/cli": "2.12.4",
+      "@tauri-apps/api": "2.12.4",
+      "oxlint": "1.90.0",
+      "oxfmt": "0.75.0",
+      "oxlint-tsgolint": "7.0.2005",
+      "@types/bun": "1.4.4",
+      "@types/node": "26.6.6",
+      "playwright-core": "1.64.1"
+    }
+  },
+  "type": "module",
+  "scripts": {
+    "dev:web": "bun run --filter @specialist/web dev",
+    "build:web": "bun run --filter @specialist/web build",
+    "dev:cli": "cargo run -p specialist-cli --",
+    "build:cli": "cargo build -p specialist-cli --release",
+    "test:rust": "cargo test --workspace --exclude specialist-native",
+    "test:native": "cargo test -p specialist-native",
+    "update:bindings": "UPDATE_BINDINGS=1 cargo test -p specialist-native bindings",
+    "test:wasm": "bun run --filter @specialist/core-wasm test:wasm",
+    "test:e2e": "bun run build:web && bun run --filter @specialist/e2e test:e2e",
+    "build:wasm": "bun run --filter @specialist/core-wasm build",
+    "check:wasm": "bun run --filter @specialist/core-wasm --filter @specialist/web check",
+    "dev:native": "bun run --filter @specialist/native tauri dev",
+    "build:native": "bun run --filter @specialist/native tauri build",
+    "typecheck": "bun run --filter '*' typecheck",
+    "lint": "oxlint --type-aware",
+    "format": "oxfmt && cargo fmt --all",
+    "format:check": "oxfmt --check",
+    "format:check:rust": "cargo fmt --all --check",
+    "test": "bun run --filter '*' test"
+  },
+  "devDependencies": {
+    "eslint-plugin-solid": "0.18.1",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "typescript": "catalog:"
+  },
+  "packageManager": "bun@1.4.4"
+}

@@ -1,0 +1,16 @@
+{
+  "name": "@specialist/e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:e2e": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@specialist/config": "workspace:*",
+    "@types/node": "catalog:",
+    "playwright-core": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

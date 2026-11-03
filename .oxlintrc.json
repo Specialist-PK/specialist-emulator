@@ -1,0 +1,97 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "oxc", "import", "jsx-a11y"],
+  "jsPlugins": ["eslint-plugin-solid"],
+  "options": { "typeAware": true },
+  "categories": { "correctness": "error" },
+  "env": { "es2023": true },
+  "ignorePatterns": ["**/dist", "packages/core-wasm/pkg", "apps/native/src/bindings.ts"],
+  "rules": {
+    "eqeqeq": "error",
+    "no-console": "warn",
+    "typescript/no-explicit-any": "error",
+    "typescript/no-floating-promises": "error",
+    "typescript/no-misused-promises": "error",
+    "typescript/await-thenable": "error",
+    "typescript/no-unnecessary-type-assertion": "error",
+    "typescript/switch-exhaustiveness-check": "error",
+    "import/no-cycle": "error",
+    "import/no-self-import": "error",
+    "import/no-duplicates": "error",
+    "solid/no-destructure": "error",
+    "solid/reactivity": "error",
+    "solid/components-return-once": "error",
+    "solid/prefer-for": "error",
+    "solid/no-react-specific-props": "error",
+    "solid/no-react-deps": "error",
+    "solid/no-innerhtml": "error"
+  },
+  "overrides": [
+    {
+      "files": ["packages/app/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@tauri-apps/**",
+                  "@specialist/core-wasm",
+                  "@specialist/core-wasm/**",
+                  "@specialist/web",
+                  "@specialist/native"
+                ],
+                "message": "The shared UI must depend only on the core contract."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/core-api/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@specialist/**",
+                  "@tauri-apps/**",
+                  "solid-js",
+                  "solid-js/**",
+                  "@solidjs/**"
+                ],
+                "message": "The core contract must remain dependency-free."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@specialist/web",
+                  "@specialist/native",
+                  "**/apps/**",
+                  "../../web/**",
+                  "../../native/**"
+                ],
+                "message": "Applications must not depend on each other."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

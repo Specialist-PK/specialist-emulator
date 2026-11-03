@@ -1,0 +1,13 @@
+{
+  "name": "@specialist/config",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./tsconfig.dom.json": "./tsconfig.dom.json",
+    "./theme.css": "./theme.css"
+  },
+  "devDependencies": {
+    "tailwindcss": "catalog:"
+  }
+}

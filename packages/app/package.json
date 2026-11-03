@@ -1,0 +1,22 @@
+{
+  "name": "@specialist/app",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@solidjs/web": "catalog:",
+    "@specialist/core-api": "workspace:*",
+    "solid-js": "catalog:"
+  },
+  "devDependencies": {
+    "@specialist/config": "workspace:*",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

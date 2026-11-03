@@ -1,0 +1,16 @@
+{
+  "$schema": "../gen/schemas/mobile-schema.json",
+  "identifier": "mobile",
+  "description": "Only the emulator commands are exposed to the mobile window.",
+  "windows": ["main"],
+  "platforms": ["iOS", "android"],
+  "permissions": [
+    "allow-reset",
+    "allow-load-demo",
+    "allow-load-program",
+    "allow-run",
+    "allow-snapshot",
+    "allow-framebuffer",
+    "allow-read-memory"
+  ]
+}

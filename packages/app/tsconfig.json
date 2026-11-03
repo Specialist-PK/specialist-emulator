@@ -1,0 +1,4 @@
+{
+  "extends": "@specialist/config/tsconfig.dom.json",
+  "include": ["src"]
+}

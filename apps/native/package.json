@@ -1,0 +1,27 @@
+{
+  "name": "@specialist/native",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "tauri": "tauri",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@solidjs/web": "catalog:",
+    "@specialist/app": "workspace:*",
+    "@specialist/core-api": "workspace:*",
+    "@tauri-apps/api": "catalog:",
+    "solid-js": "catalog:"
+  },
+  "devDependencies": {
+    "@solidjs/vite-plugin": "catalog:",
+    "@specialist/config": "workspace:*",
+    "@tailwindcss/vite": "catalog:",
+    "@tauri-apps/cli": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
+}

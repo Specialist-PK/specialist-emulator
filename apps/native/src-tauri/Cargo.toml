@@ -1,0 +1,29 @@
+[package]
+name = "specialist-native"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[lib]
+name = "specialist_native_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[target.'cfg(windows)'.build-dependencies]
+embed-resource = "3"
+
+[dependencies]
+specialist-core.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+tauri = { version = "2.12", features = [] }
+specta = { version = "=2.0.0-rc.26", features = ["derive"] }
+specta-typescript = "0.0.13"
+tauri-specta = { version = "=2.0.0-rc.26", features = ["derive", "typescript"] }
+
+[dev-dependencies]
+tauri = { version = "2.12", features = ["test"] }
+serde_json = "1"
