@@ -1,33 +1,33 @@
-# 0005. CI OS matrix, aggregate gate, and path selection
+# 0005. Матрица ОС, aggregate gate и выбор CI по путям
 
-[Русская версия](0005-ci-os-matrix-gate-and-path-selection.ru.md)
+[English version](0005-ci-os-matrix-gate-and-path-selection.en.md)
 
-Status: accepted (2026-11-03)
+Статус: принято (2026-11-03)
 
-## Context
+## Контекст
 
-Linux-only local checks missed two real failures: case-insensitive resolution of `Screen.tsx`/`screen.ts` on macOS/Windows and CRLF/LF mismatches in generated Tauri bindings on Windows. Running every job for documentation-only changes would also waste the expensive native matrix.
+Локальные проверки только на Linux пропустили две реальные ошибки: разрешение `Screen.tsx`/`screen.ts` на case-insensitive ФС macOS/Windows и несовпадение CRLF/LF в генерируемых Tauri-привязках на Windows. Запуск всех jobs при изменении документации также тратил бы дорогую нативную матрицу.
 
-## Decision
+## Решение
 
-CI runs `rust`, `ts`, and `native` on Ubuntu, macOS, and Windows with `fail-fast: false`. WASM, web build, dependency boundaries, and browser E2E run on Ubuntu where the required tools and Chrome are available. `deny` checks dependency policy.
+CI запускает `rust`, `ts` и `native` на Ubuntu, macOS и Windows с `fail-fast: false`. WASM, web-сборка, границы зависимостей и браузерный E2E идут на Ubuntu с необходимыми инструментами и Chrome. `deny` проверяет политику зависимостей.
 
-`tools/ci` selects jobs from changed files with tested rules. Pull requests compare `HEAD^1` with the merge commit; other events run everything. Rules list known-irrelevant files, so an unknown path triggers relevant checks rather than skipping them. `deny` uses a positive list of dependency and workflow files.
+`tools/ci` выбирает jobs по изменённым файлам с помощью покрытых тестами правил. В pull request сравниваются `HEAD^1` и merge-коммит; в остальных событиях запускается всё. Правила перечисляют заведомо нерелевантные файлы, поэтому неизвестный путь запускает проверки, а не пропускает их. `deny` использует положительный список файлов зависимостей и workflow.
 
-One aggregate `ci` job depends on every other job with `if: always()`. Skipped jobs count as success; failed or cancelled jobs fail the gate. Branch protection requires only `ci`.
+Один aggregate `ci` зависит от всех jobs через `if: always()`. Пропущенные jobs считаются успехом, упавшие и отменённые ломают gate. Защита ветки требует только `ci`.
 
-`.gitattributes` enforces LF in every working copy. The framebuffer helper is named `framebuffer.ts`, avoiding the case-only collision with `Screen.tsx`.
+`.gitattributes` закрепляет LF в любой рабочей копии. Помощник framebuffer называется `framebuffer.ts`, устраняя конфликт только в регистре с `Screen.tsx`.
 
-## Alternatives
+## Альтернативы
 
-- **Always run everything.** Simpler, but expensive for irrelevant changes.
-- **Workflow `paths:` filters or an external action.** Less local code, but harder to test and easy to combine incorrectly with required checks.
-- **Linux-only CI.** Cheaper, but misses filesystem, shell, resource, and line-ending differences.
-- **Case-insensitive imports without renaming.** Does not remove ambiguity for TypeScript and bundlers.
+- **Всегда запускать всё.** Проще, но дорого для нерелевантных изменений.
+- **`paths:` или внешний action.** Меньше своего кода, но сложнее тестировать и безопасно сочетать с обязательными проверками.
+- **CI только на Linux.** Дешевле, но не видит различия ФС, shell, ресурсов и переводов строк.
+- **Оставить имена файлов.** Не устраняет неоднозначность для TypeScript и бандлеров.
 
-## Consequences
+## Последствия
 
-- (+) The original failures are addressed at their causes and covered by the OS matrix.
-- (+) One required check supports skipped jobs and an evolving matrix.
-- (−) Irrelevant-path lists require maintenance and tests.
-- (−) Native Windows remains the slowest job; unknown files intentionally cause extra work.
+- (+) Исходные ошибки устранены по причинам и охвачены матрицей ОС.
+- (+) Одна обязательная проверка поддерживает пропущенные jobs и развитие матрицы.
+- (−) Списки нерелевантных путей требуют поддержки и тестов.
+- (−) Native Windows остаётся самой медленной job; неизвестные файлы намеренно создают дополнительную работу.

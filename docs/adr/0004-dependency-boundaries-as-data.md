@@ -1,30 +1,30 @@
-# 0004. Declared dependency boundaries as data
+# 0004. Границы объявленных зависимостей как данные
 
-[Русская версия](0004-dependency-boundaries-as-data.ru.md)
+[English version](0004-dependency-boundaries-as-data.en.md)
 
-Status: accepted (2026-11-03)
+Статус: принято (2026-11-03)
 
-## Context
+## Контекст
 
-Import linting does not see dependencies declared but unused in source, and a WASM build catches only part of the platform graph. The core, UI, CLI, web, and native applications need enforceable boundaries based on real manifests.
+Линтер импортов не видит зависимости, объявленные, но не используемые в исходниках, а сборка WASM ловит лишь часть платформенного графа. Ядру, UI, CLI, web и native нужны проверяемые границы на основе настоящих манифестов.
 
-## Decision
+## Решение
 
-Use `tools/boundaries` through `bun run boundaries` with rules in `tools/boundaries/rules.json`.
+Используется `tools/boundaries` через `bun run boundaries` с правилами в `tools/boundaries/rules.json`.
 
-Rust graphs come from `cargo metadata --locked --filter-platform`; TypeScript graphs come from workspace manifests. `directOnly` defines an exhaustive allowlist for direct dependencies, while `forbidTransitive` rejects packages anywhere in the reachable graph and reports a dependency path. Missing rule subjects are errors so stale rules cannot silently pass.
+Rust-графы строятся через `cargo metadata --locked --filter-platform`, TypeScript-графы — из манифестов workspace. `directOnly` задаёт исчерпывающий список прямых зависимостей, `forbidTransitive` запрещает пакеты во всём достижимом графе и показывает путь зависимости. Отсутствие субъекта правила считается ошибкой, чтобы устаревшие правила не проходили молча.
 
-Rules describe the current architecture: `specialist-core` has no platform dependencies, the WASM crate is a thin boundary, `core-api` is dependency-free, shared UI knows only the contract, and applications do not depend on each other. New rules must be checked by intentionally violating a real manifest, then reverting the violation.
+Правила описывают текущую архитектуру: `specialist-core` не имеет платформенных зависимостей, WASM-крейт остаётся тонкой границей, `core-api` независим, общий UI знает только контракт, приложения не зависят друг от друга. Новое правило проверяется намеренным нарушением в настоящем манифесте с последующим откатом нарушения.
 
-## Alternatives
+## Альтернативы
 
-- **Import lint only.** Does not cover manifest-only or transitive dependencies.
-- **cargo-deny for architecture.** Useful for supply-chain policy, but awkward for exact per-package allowlists.
-- **Builds only.** Do not detect every forbidden edge, especially on a different target platform.
+- **Только линтер импортов.** Не покрывает зависимости только в манифесте и транзитивные.
+- **cargo-deny для архитектуры.** Полезен цепочке поставок, но неудобен для точных списков зависимостей каждого пакета.
+- **Только сборки.** Не находят все запрещённые связи, особенно для другой целевой платформы.
 
-## Consequences
+## Последствия
 
-- (+) Violations fail with a concrete dependency chain and reason.
-- (+) The rules are readable as an architectural inventory and covered by tests.
-- (−) Rules must be updated with every relevant manifest or architecture change.
-- (−) External TypeScript dependency graphs are treated as leaves; import checks remain a separate layer.
+- (+) Нарушение останавливает проверку и показывает конкретную цепочку и причину.
+- (+) Правила служат читаемым архитектурным перечнем и покрыты тестами.
+- (−) Их нужно обновлять с каждым соответствующим изменением манифеста или архитектуры.
+- (−) Внешние TypeScript-зависимости считаются листьями; проверка импортов остаётся отдельным слоем.

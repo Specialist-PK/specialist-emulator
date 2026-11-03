@@ -1,36 +1,36 @@
-# 0001. Record architecture decisions
+# 0001. Фиксируем архитектурные решения
 
-[Русская версия](0001-record-architecture-decisions.ru.md)
+[English version](0001-record-architecture-decisions.en.md)
 
-Status: accepted (2026-11-03)
+Статус: принято (2026-11-03)
 
-## Context
+## Контекст
 
-Code shows what the project does but not why a solution was chosen or which alternatives were rejected. Without durable records, architectural constraints look arbitrary and are accidentally broken.
+Код показывает, что делает проект, но не объясняет, почему выбрано решение и какие альтернативы отклонены. Без сохранённых причин архитектурные ограничения выглядят произвольными и случайно нарушаются.
 
-## Decision
+## Решение
 
-Record every significant decision in `docs/adr/NNNN-short-name.md` with an English canonical document and a Russian `.ru.md` companion.
+Каждое значимое решение записывается в `docs/adr/NNNN-short-name.md`: канонический русский документ и английская версия `.en.md`.
 
-Each record contains:
+Запись содержит:
 
-1. title and number;
-2. status (`accepted`, `replaced by ADR-NNNN`, or `rejected`) and date;
-3. context and constraints;
-4. decision;
-5. real alternatives and why they were rejected;
-6. positive and negative consequences.
+1. заголовок и номер;
+2. статус (`принято`, `заменено ADR-NNNN`, `отклонено`) и дату;
+3. контекст и ограничения;
+4. решение;
+5. реальные альтернативы и причины отказа;
+6. положительные и отрицательные последствия.
 
-Accepted records are not rewritten. A changed decision gets a new record and the old one links to its replacement. Numbers are sequential and never reused. Records stay short. Decisions that are expensive to reverse require an ADR; variable names and other local choices do not.
+Принятые записи не переписываются. Изменённое решение получает новый ADR, а старый ссылается на замену. Номера сквозные и не переиспользуются. Записи короткие. ADR требуется для решений, которые дорого развернуть; локальные решения вроде имени переменной его не требуют.
 
-## Alternatives
+## Альтернативы
 
-- **Code comments only.** Local reasons fit well, but cross-cutting decisions have no single code location.
-- **One architecture page.** It quickly becomes stale and loses decision history.
-- **No records.** Cheaper immediately, more expensive during later changes.
+- **Только комментарии в коде.** Подходят локальным причинам, но сквозное решение нельзя привязать к одному месту.
+- **Одна страница архитектуры.** Быстро устаревает и теряет историю решений.
+- **Не записывать.** Дешевле сразу, дороже при последующих изменениях.
 
-## Consequences
+## Последствия
 
-- (+) Rationale and trade-offs remain available to people and agents.
-- (+) Changes begin with explicit understanding of existing constraints.
-- (−) Significant work requires disciplined documentation in two languages.
+- (+) Причины и компромиссы доступны людям и агентам.
+- (+) Изменения начинаются с понимания существующих ограничений.
+- (−) Значимая работа требует дисциплинированной документации на двух языках.
