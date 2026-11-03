@@ -94,6 +94,8 @@ Web и Tauri → @specialist/app → @specialist/core-api
 
 ## Целевая модель машины
 
+Первая эталонная конфигурация определена в [reference-machine.md](reference-machine.md) и [ADR-0011](adr/0011-reference-specialist-configuration.md).
+
 Для перехода от демонстрационного компьютера к конкретным моделям предлагается разделить:
 
 - `Cpu` — исполнение Intel 8080;
