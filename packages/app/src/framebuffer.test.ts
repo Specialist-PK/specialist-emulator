@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { framebufferToRgba } from "./screen";
+import { framebufferToRgba } from "./framebuffer";
 
 describe("framebufferToRgba", () => {
   it("places the most significant bit on the left", () => {

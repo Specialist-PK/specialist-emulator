@@ -1,6 +1,6 @@
 import { createEffect } from "solid-js";
 
-import { FRAMEBUFFER_SIZE, framebufferToRgba, SCREEN_HEIGHT, SCREEN_WIDTH } from "./screen";
+import { FRAMEBUFFER_SIZE, framebufferToRgba, SCREEN_HEIGHT, SCREEN_WIDTH } from "./framebuffer";
 
 export function Screen(props: { frame?: Uint8Array }) {
   let canvas: HTMLCanvasElement | undefined;
