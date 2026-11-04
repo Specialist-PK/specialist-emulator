@@ -24,6 +24,7 @@ export interface CpuSnapshot {
 export interface EmulatorSnapshot {
   cpu: CpuSnapshot;
   cycles: number;
+  frame: number;
 }
 
 export const SPECIALIST_KEYS = [

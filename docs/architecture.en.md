@@ -80,6 +80,8 @@ The KR580VV55A system PPI is connected to the bus at `F800–FFFF`, with registe
 
 Memory and port access goes through the `Bus` abstraction. New devices must connect through it rather than bypass it with direct CPU access.
 
+`VideoController` advances by the cycles of every instruction and captures the completed framebuffer after 256 visible scanlines. Video memory may continue changing, but consumers receive the latest completed frame and its index in the snapshot.
+
 ### Determinism
 
 For one initial state, configuration, and sequence of external events, execution results must match on every platform. The core does not read system clocks, filesystem, or DOM and does not use platform multithreading.

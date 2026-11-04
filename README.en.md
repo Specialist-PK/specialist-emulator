@@ -14,7 +14,7 @@ The project builds on the architecture and development process of [another-usele
 - 64 KiB address space and instruction stepping;
 - Original Specialist memory map and external loading of a 6 KiB Monitor 2 ROM;
 - KR580VV55A system PPI, `original` keyboard matrix, and deterministic key events;
-- Monochrome 384 × 256 display with video memory at `0x9000`;
+- Monochrome 384 × 256 display with video memory at `0x9000` and CPU-cycle-driven frames;
 - Run, pause, reset, and single-step controls;
 - Registers, flags, and cycle counter display;
 - BIN and Monitor 2 ROM loading through the shared UI;

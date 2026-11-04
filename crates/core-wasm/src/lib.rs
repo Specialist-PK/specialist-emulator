@@ -47,6 +47,7 @@ struct CpuSnapshot {
 struct EmulatorSnapshot {
     cpu: CpuSnapshot,
     cycles: f64,
+    frame: f64,
 }
 
 fn snapshot(machine: &Machine) -> Result<JsValue, JsValue> {
@@ -73,6 +74,7 @@ fn snapshot(machine: &Machine) -> Result<JsValue, JsValue> {
             halted: snapshot.cpu.halted,
         },
         cycles: snapshot.cycles as f64,
+        frame: snapshot.frame as f64,
     })
     .map_err(|error| JsValue::from_str(&error.to_string()))
 }

@@ -28,6 +28,12 @@ Evidence levels differ:
 
 The 32 KiB RAM variant, MX, Monitor 1, color upgrades, SD, the VI53 timer, and additional controllers are outside this configuration.
 
+## Video frame
+
+At 2 MHz, one scanline takes 128 cycles, the 256-line visible area takes 32,768 cycles, vertical blanking takes 7,168 cycles, and a full frame takes 40,000 cycles. These are direct conversions of the journal's 64 μs, 20 ms, and 3584 μs.
+
+The video controller advances by actual instruction cycles and captures the completed framebuffer at the end of the visible area. `framebuffer()` returns this captured image rather than live video memory. The `frame` snapshot field increments for every capture; reset restores it and clears the image. While execution is stopped, including after `HLT`, time does not advance and no new frame is produced.
+
 ## Memory map
 
 | Range       | Purpose                             | Source and notes                                                                 |

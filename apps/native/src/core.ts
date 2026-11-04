@@ -17,7 +17,7 @@ function unwrap<T>(
 }
 
 function normalize(snapshot: IpcSnapshot): EmulatorSnapshot {
-  return { ...snapshot, cycles: Number(snapshot.cycles) };
+  return { ...snapshot, cycles: Number(snapshot.cycles), frame: Number(snapshot.frame) };
 }
 
 export function createIpcCore(): Emulator {

@@ -33,6 +33,7 @@ struct CpuOutput {
 struct SnapshotOutput {
     cpu: CpuOutput,
     cycles: u64,
+    frame: u64,
 }
 
 #[derive(Serialize)]
@@ -145,6 +146,7 @@ fn print_json(machine: &Machine) {
         snapshot: SnapshotOutput {
             cpu: snapshot.cpu.into(),
             cycles: snapshot.cycles,
+            frame: snapshot.frame,
         },
         framebuffer: machine.framebuffer(),
     };
