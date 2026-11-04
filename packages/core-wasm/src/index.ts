@@ -46,6 +46,11 @@ export async function createCore(options: CreateCoreOptions = {}): Promise<Emula
     async loadProgram(program, address, entryPoint = address) {
       return call(() => machine.loadProgram(address, entryPoint, program) as EmulatorSnapshot);
     },
+    async keyEvent(event) {
+      return call(
+        () => machine.keyEvent(event.key, event.pressed, event.cycle) as EmulatorSnapshot,
+      );
+    },
     async run(instructions) {
       return call(() => machine.run(instructions) as EmulatorSnapshot);
     },

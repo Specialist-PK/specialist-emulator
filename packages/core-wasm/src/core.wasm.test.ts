@@ -61,4 +61,24 @@ describe("WASM emulator", () => {
     });
     core.dispose();
   });
+
+  it("scans a key through the real system PPI", async () => {
+    const core = await createTestCore();
+    await core.loadMonitor2Rom(new Uint8Array(0x1800));
+    const program = Uint8Array.from([
+      0x3e, 0x82, 0x32, 0x03, 0xf8, 0xaf, 0x32, 0x00, 0xf8, 0x32, 0x02, 0xf8, 0x3a, 0x01, 0xf8,
+      0x32, 0x00, 0x01, 0x76,
+    ]);
+    await core.loadProgram(program, 0);
+    await core.keyEvent({ key: "a", pressed: true });
+    await core.run(8);
+    expect(await core.readMemory(0x0100, 1)).toEqual(Uint8Array.from([0xef]));
+
+    const result = await core
+      .keyEvent({ key: "invalid" as never, pressed: true })
+      .catch((error: unknown) => error);
+    expect(result).toBeInstanceOf(EmulatorException);
+    expect((result as EmulatorException).error).toEqual({ kind: "unknownKey", key: "invalid" });
+    core.dispose();
+  });
 });

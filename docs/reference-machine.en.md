@@ -15,33 +15,33 @@ Evidence levels differ:
 
 ## Base parameters
 
-| Parameter | Reference value |
-| --- | --- |
-| Model | Journal Specialist with Monitor 2 |
-| CPU | KR580VM80A / Intel 8080, 2 MHz |
-| RAM | 48 KiB: 36 KiB at `0000–8FFF` and 12 KiB video memory at `9000–BFFF` |
-| ROM | 6 KiB at `C000–D7FF`: loader, Monitor 2, character generator |
-| Display | Monochrome, 384 × 256 pixels |
-| System interface | KR580VV55A at `F800–FFFF` |
-| Keyboard | 12 × 6 matrix plus a separate Shift |
-| Sound and tape | Deferred to Stage 2 except for required system-port lines |
+| Parameter        | Reference value                                                      |
+| ---------------- | -------------------------------------------------------------------- |
+| Model            | Journal Specialist with Monitor 2                                    |
+| CPU              | KR580VM80A / Intel 8080, 2 MHz                                       |
+| RAM              | 48 KiB: 36 KiB at `0000–8FFF` and 12 KiB video memory at `9000–BFFF` |
+| ROM              | 6 KiB at `C000–D7FF`: loader, Monitor 2, character generator         |
+| Display          | Monochrome, 384 × 256 pixels                                         |
+| System interface | KR580VV55A at `F800–FFFF`                                            |
+| Keyboard         | 12 × 6 matrix plus a separate Shift                                  |
+| Sound and tape   | Deferred to Stage 2 except for required system-port lines            |
 
 The 32 KiB RAM variant, MX, Monitor 1, color upgrades, SD, the VI53 timer, and additional controllers are outside this configuration.
 
 ## Memory map
 
-| Range | Purpose | Source and notes |
-| --- | --- | --- |
-| `0000–3FFF` | 16 KiB user RAM | Journal schematic |
-| `4000–7FFF` | 16 KiB RAM marked as reserved | Journal schematic; this is not a separate device or a prohibition on program use |
-| `8000–8FFF` | 4 KiB user RAM | Journal schematic; Monitor 2 also uses part of upper RAM for system purposes |
-| `9000–BFFF` | 12 KiB video RAM | Journal schematic and video description |
-| `C000–C7FF` | 2 KiB loader ROM | Monitor 2 memory map |
-| `C800–CFFF` | 2 KiB Monitor 2 ROM | Monitor 2 memory map |
-| `D000–D7FF` | 2 KiB character-generator ROM | Monitor 2 memory map |
-| `D800–EFFF` | Undefined for this reference | Not to be used without a separate configuration |
-| `F000–F7FF` | Optional printer port | Outside the base configuration |
-| `F800–FFFF` | Keyboard and system KR580VV55A port | Monitor 2 memory map |
+| Range       | Purpose                             | Source and notes                                                                 |
+| ----------- | ----------------------------------- | -------------------------------------------------------------------------------- |
+| `0000–3FFF` | 16 KiB user RAM                     | Journal schematic                                                                |
+| `4000–7FFF` | 16 KiB RAM marked as reserved       | Journal schematic; this is not a separate device or a prohibition on program use |
+| `8000–8FFF` | 4 KiB user RAM                      | Journal schematic; Monitor 2 also uses part of upper RAM for system purposes     |
+| `9000–BFFF` | 12 KiB video RAM                    | Journal schematic and video description                                          |
+| `C000–C7FF` | 2 KiB loader ROM                    | Monitor 2 memory map                                                             |
+| `C800–CFFF` | 2 KiB Monitor 2 ROM                 | Monitor 2 memory map                                                             |
+| `D000–D7FF` | 2 KiB character-generator ROM       | Monitor 2 memory map                                                             |
+| `D800–EFFF` | Undefined for this reference        | Not to be used without a separate configuration                                  |
+| `F000–F7FF` | Optional printer port               | Outside the base configuration                                                   |
+| `F800–FFFF` | Keyboard and system KR580VV55A port | Monitor 2 memory map                                                             |
 
 Reserved RAM remains RAM: the configuration must not return a special value or reject writes. Conventional usage labels do not change the physical address map.
 
@@ -49,12 +49,12 @@ Reserved RAM remains RAM: the configuration must not return a special value or r
 
 The KR580VV55A port is memory-mapped rather than accessed through the 8-bit `IN`/`OUT` space.
 
-| Address | Purpose |
-| --- | --- |
-| `F800` | Port A: keyboard matrix rows 0–7 |
-| `F801` | Port B: bits 2–7 are matrix columns; bit 1 is Shift; bit 0 is tape input |
-| `F802` | Port C: bits 0–3 are rows 8–11; bit 5 is sound output; bit 7 is tape output |
-| `F803` | KR580VV55A control register |
+| Address | Purpose                                                                     |
+| ------- | --------------------------------------------------------------------------- |
+| `F800`  | Port A: keyboard matrix rows 0–7                                            |
+| `F801`  | Port B: bits 2–7 are matrix columns; bit 1 is Shift; bit 0 is tape input    |
+| `F802`  | Port C: bits 0–3 are rows 8–11; bit 5 is sound output; bit 7 is tape output |
+| `F803`  | KR580VV55A control register                                                 |
 
 Emu80 repeats these four registers every 4 bytes throughout `F800–FFFF`. This is accepted as an implementation rule to be tested; the journal schematic does not independently confirm it.
 
@@ -77,12 +77,14 @@ KeyEvent {
 Rules:
 
 - event sequences are deterministic; `cycle` is supplied only by the caller, and the core never reads system clocks;
-- press sets the key bit, release clears it;
+- without `cycle`, an event applies immediately; a scheduled event runs before the next instruction once the current cycle reaches `cycle`;
+- `cycle` is a 32-bit unsigned number; events from the past are rejected, and events for the same cycle retain their arrival order;
+- press sets the key bit, release clears it; machine reset clears keys and the event queue;
 - Shift is stored separately and inverted as active-low when port B is read;
 - identical events from an identical initial state produce identical port values;
 - simultaneous presses remain in matrix state, but limitations of the two-pass scan are not hidden.
 
-Emu80's `original` matrix maps logical keys to cells. MX, Lik, Eureka, and SP-580 layouts do not replace it automatically.
+The shared `Emulator.keyEvent(event)` contract is implemented in WASM and Tauri IPC. Valid identifiers are listed in `SPECIALIST_KEYS` from `packages/core-api`; Emu80's `original` matrix maps logical keys to cells. MX, Lik, Eureka, and SP-580 layouts do not replace it automatically. Browser and desktop physical key bindings are outside this contract and remain a separate task.
 
 ## ROM and ROM-free mode
 
@@ -110,7 +112,7 @@ ROM images are not added to the repository until redistribution rights are confi
 
 ## Verification
 
-After implementing memory and ports, verify:
+The reference configuration is covered by the following checks:
 
 1. reads and writes in every RAM region, including the reserved area;
 2. rejection of ROM writes without a special mode;

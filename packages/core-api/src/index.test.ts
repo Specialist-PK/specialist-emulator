@@ -9,9 +9,11 @@ describe("EmulatorException", () => {
     expect(new EmulatorException(error).error).toEqual(error);
   });
 
-  it("accepts typed ROM errors", () => {
+  it("accepts typed ROM and keyboard errors", () => {
     expect(isEmulatorError({ kind: "invalidRomSize", expected: 0x1800, actual: 1 })).toBe(true);
     expect(isEmulatorError({ kind: "missingRom" })).toBe(true);
+    expect(isEmulatorError({ kind: "unknownKey", key: "invalid" })).toBe(true);
+    expect(isEmulatorError({ kind: "eventCycleInPast", cycle: 4 })).toBe(true);
   });
 
   it("rejects malformed values", () => {

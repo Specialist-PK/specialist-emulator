@@ -5,6 +5,7 @@ fn main() {
             "load_demo",
             "load_monitor2_rom",
             "load_program",
+            "key_event",
             "run",
             "snapshot",
             "framebuffer",

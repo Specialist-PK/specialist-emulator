@@ -10,7 +10,9 @@ export type WasmEmulatorError =
   | { kind: "rangeOutOfBounds"; address: number; length: number }
   | { kind: "memoryNotWritable"; address: number; length: number }
   | { kind: "invalidRomSize"; expected: number; actual: number }
-  | { kind: "missingRom" };
+  | { kind: "missingRom" }
+  | { kind: "unknownKey"; key: string }
+  | { kind: "eventCycleInPast"; cycle: number };
 "#;
 
 #[derive(Serialize)]
@@ -103,6 +105,14 @@ fn error_object(error: MachineError) -> JsValue {
         MachineError::MissingRom => {
             set("kind", "missingRom".into());
         }
+        MachineError::UnknownKey { key } => {
+            set("kind", "unknownKey".into());
+            set("key", key.into());
+        }
+        MachineError::EventCycleInPast { cycle } => {
+            set("kind", "eventCycleInPast".into());
+            set("cycle", cycle.into());
+        }
     }
     object.into()
 }
@@ -147,6 +157,26 @@ impl WasmEmulator {
     ) -> Result<JsValue, JsValue> {
         self.machine
             .load_program(address, entry_point, program)
+            .map_err(error_object)?;
+        snapshot(&self.machine)
+    }
+
+    #[wasm_bindgen(js_name = keyEvent)]
+    pub fn key_event(
+        &mut self,
+        key: &str,
+        pressed: bool,
+        cycle: Option<u32>,
+    ) -> Result<JsValue, JsValue> {
+        let key = key
+            .parse()
+            .map_err(|key| error_object(MachineError::UnknownKey { key }))?;
+        self.machine
+            .key_event(specialist_core::KeyEvent {
+                key,
+                pressed,
+                cycle,
+            })
             .map_err(error_object)?;
         snapshot(&self.machine)
     }

@@ -13,6 +13,10 @@ export function describeError(error: unknown): string {
         return `Неверный размер Monitor 2 ROM: ожидалось ${error.error.expected}, получено ${error.error.actual}`;
       case "missingRom":
         return "Monitor 2 ROM не загружен";
+      case "unknownKey":
+        return `Неизвестная клавиша «Специалиста»: ${error.error.key}`;
+      case "eventCycleInPast":
+        return `Такт события клавиатуры уже прошёл: ${error.error.cycle}`;
     }
   }
   return error instanceof Error ? error.message : String(error);
