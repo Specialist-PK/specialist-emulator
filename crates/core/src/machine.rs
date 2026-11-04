@@ -4,13 +4,15 @@ use crate::{
     cpu::{Bus, Cpu},
     keyboard::KeyEvent,
     system_ppi::SystemPpi,
+    video::VideoController,
 };
+
+pub use crate::video::FRAMEBUFFER_SIZE;
 
 pub const ADDRESS_SPACE_SIZE: usize = 65_536;
 pub const SCREEN_ADDRESS: u16 = 0x9000;
 pub const SCREEN_WIDTH: usize = 384;
 pub const SCREEN_HEIGHT: usize = 256;
-pub const FRAMEBUFFER_SIZE: usize = SCREEN_WIDTH / 8 * SCREEN_HEIGHT;
 pub const MONITOR2_ROM_ADDRESS: u16 = 0xc000;
 pub const MONITOR2_ROM_SIZE: usize = 0x1800;
 
@@ -36,6 +38,7 @@ pub const DEMO_PROGRAM: &[u8] = &[
 pub struct Snapshot {
     pub cpu: Cpu,
     pub cycles: u64,
+    pub frame: u64,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -132,6 +135,7 @@ pub struct Machine {
     model: MachineModel,
     rom_loaded: bool,
     key_events: VecDeque<KeyEvent>,
+    video: VideoController,
 }
 
 impl Default for Machine {
@@ -143,6 +147,7 @@ impl Default for Machine {
             model: MachineModel::Demo,
             rom_loaded: false,
             key_events: VecDeque::new(),
+            video: VideoController::default(),
         }
     }
 }
@@ -170,6 +175,7 @@ impl Machine {
         self.bus.ports = [0; 256];
         self.bus.ppi.reset();
         self.key_events.clear();
+        self.video.reset();
     }
 
     pub fn clear_memory(&mut self) {
@@ -226,6 +232,9 @@ impl Machine {
         self.apply_due_key_events();
         let cycles = self.cpu.step(&mut self.bus);
         self.cycles = self.cycles.wrapping_add(cycles as u64);
+        let start = SCREEN_ADDRESS as usize;
+        self.video
+            .advance(cycles, &self.bus.memory[start..start + FRAMEBUFFER_SIZE]);
         Ok(cycles)
     }
 
@@ -305,14 +314,14 @@ impl Machine {
     }
 
     pub fn framebuffer(&self) -> &[u8] {
-        let start = SCREEN_ADDRESS as usize;
-        &self.bus.memory[start..start + FRAMEBUFFER_SIZE]
+        self.video.framebuffer()
     }
 
     pub fn snapshot(&self) -> Snapshot {
         Snapshot {
             cpu: self.cpu,
             cycles: self.cycles,
+            frame: self.video.frame_index(),
         }
     }
 }
@@ -342,6 +351,7 @@ mod tests {
         let result = machine.run(200_000).unwrap();
 
         assert!(result.halted);
+        assert_eq!(machine.snapshot().frame, 14);
         assert_eq!(machine.snapshot().cpu.pc, 0x0014);
         assert_eq!(machine.snapshot().cpu.sp, 0x8fff);
         assert_eq!(machine.snapshot().cpu.bc(), 0);
@@ -349,7 +359,7 @@ mod tests {
         assert_eq!(machine.framebuffer().len(), FRAMEBUFFER_SIZE);
         assert_eq!(machine.framebuffer()[0], 0x90);
         assert_eq!(machine.framebuffer()[1], 0x91);
-        assert_eq!(machine.framebuffer()[FRAMEBUFFER_SIZE - 1], 0x40);
+        assert_eq!(machine.framebuffer()[FRAMEBUFFER_SIZE - 1], 0);
     }
 
     #[test]

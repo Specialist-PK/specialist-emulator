@@ -18,6 +18,7 @@ describe("WASM emulator", () => {
 
     const stopped = await core.run(200_000);
     expect(stopped.cpu.halted).toBe(true);
+    expect(stopped.frame).toBe(14);
     expect(stopped.cpu.pc).toBe(0x14);
     expect(stopped.cpu.sp).toBe(0x8fff);
 
@@ -25,7 +26,7 @@ describe("WASM emulator", () => {
     expect(frame).toHaveLength(12_288);
     expect(frame[0]).toBe(0x90);
     expect(frame[1]).toBe(0x91);
-    expect(frame[12_287]).toBe(0x40);
+    expect(frame[12_287]).toBe(0);
     core.dispose();
   });
 

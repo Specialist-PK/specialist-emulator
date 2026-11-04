@@ -42,6 +42,7 @@ pub struct CpuSnapshot {
 pub struct EmulatorSnapshot {
     cpu: CpuSnapshot,
     cycles: String,
+    frame: String,
 }
 
 #[derive(Debug, Serialize, Type, thiserror::Error)]
@@ -107,6 +108,7 @@ fn make_snapshot(machine: &Machine) -> EmulatorSnapshot {
             halted: snapshot.cpu.halted,
         },
         cycles: snapshot.cycles.to_string(),
+        frame: snapshot.frame.to_string(),
     }
 }
 

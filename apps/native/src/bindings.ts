@@ -36,6 +36,7 @@ export type CpuSnapshot = {
 export type EmulatorSnapshot = {
 	cpu: CpuSnapshot,
 	cycles: string,
+	frame: string,
 };
 
 export type FlagsSnapshot = {

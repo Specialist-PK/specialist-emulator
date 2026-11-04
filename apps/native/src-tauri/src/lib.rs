@@ -124,6 +124,7 @@ mod tests {
             .unwrap();
         assert_eq!(stopped["cpu"]["pc"], 0x14);
         assert_eq!(stopped["cpu"]["halted"], true);
+        assert_eq!(stopped["frame"], "14");
 
         let frame = invoke(&webview, "framebuffer", json!({}))
             .expect("framebuffer failed")
@@ -131,7 +132,7 @@ mod tests {
             .unwrap();
         assert_eq!(frame.len(), 12_288);
         assert_eq!(frame[1], 0x91);
-        assert_eq!(frame[12_287], 0x40);
+        assert_eq!(frame[12_287], 0);
     }
 
     #[test]

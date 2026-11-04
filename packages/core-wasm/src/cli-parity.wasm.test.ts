@@ -43,10 +43,11 @@ describe("CLI and WASM parity", () => {
       expect(cli.framebuffer).toEqual(Array.from(await core.framebuffer()));
       expect(cli.snapshot.cpu.pc).toBe(0xc014);
       expect(cli.snapshot.cycles).toBe(552_997);
+      expect(cli.snapshot.frame).toBe(14);
       expect(cli.framebuffer).toHaveLength(12_288);
       expect(cli.framebuffer[0]).toBe(0x90);
       expect(cli.framebuffer[1]).toBe(0x91);
-      expect(cli.framebuffer[12_287]).toBe(0x40);
+      expect(cli.framebuffer[12_287]).toBe(0);
     } finally {
       core?.dispose();
       await rm(directory, { recursive: true, force: true });

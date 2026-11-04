@@ -20,6 +20,7 @@ The architectural prototype and Stage 1 are complete:
 - built-in demo and BIN loading;
 - unit, WASM, native, and browser checks;
 - identical snapshots and framebuffers for one Monitor 2 program in CLI and WASM;
+- CPU-cycle-driven video frames: 32,768 visible cycles and 7,168 blanking cycles;
 - native CLI debugging in Zed through CodeLLDB.
 
 This is not yet a complete model of a real Specialist. Tape, sound, exact timing, clone configurations, JCUKEN layout, and DAP are not implemented.
@@ -47,6 +48,8 @@ Acceptance criteria:
 - a missing ROM produces a clear error rather than an implicit model change.
 
 ## Stage 2. Timing, video, sound, and tape
+
+**Status:** in progress. The first CPU-cycle-driven video controller is implemented and covered by frame-boundary tests; next tasks are sound, tape, and a complete deterministic state snapshot.
 
 **Goal:** reproduce time-dependent machine behavior.
 
