@@ -17,12 +17,13 @@ The project builds on the architecture and development process of [another-usele
 - Monochrome 384 × 256 display with video memory at `0x9000`;
 - Run, pause, reset, and single-step controls;
 - Registers, flags, and cycle counter display;
-- BIN loading at a specified address;
+- BIN and Monitor 2 ROM loading through the shared UI;
+- Physical QWERTY keyboard input with keys released on focus loss;
 - Built-in i8080 demo that fills video memory;
 - Shared Solid UI for web and desktop;
 - Matching emulation scenarios through WASM and Tauri IPC.
 
-This is an early i8080 core, not yet a complete model of a specific Specialist. The memory map, Monitor 2 ROM, system PPI, and logical keyboard matrix are implemented. Host key bindings, tape, sound, computer variants, exact timing, and a DAP debugger are not. Third-party ROMs and programs are not included.
+This is an early i8080 core, not yet a complete model of a specific Specialist. The memory map, Monitor 2 ROM, system PPI, keyboard matrix, and QWERTY host bindings are implemented. JCUKEN layout, tape, sound, computer variants, exact timing, and a DAP debugger are not. Third-party ROMs and programs are not included.
 
 ## Structure
 

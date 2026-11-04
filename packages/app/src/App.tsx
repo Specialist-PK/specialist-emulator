@@ -3,6 +3,7 @@ import { createSignal, onSettled, Show, useContext } from "solid-js";
 
 import { CoreContext } from "./core-context";
 import { describeError } from "./errors";
+import { bindKeyboard } from "./keyboard";
 import { Registers } from "./Registers";
 import { Screen } from "./Screen";
 
@@ -63,9 +64,26 @@ export function App(props: { subtitle?: string }) {
     }
   }
 
+  async function loadMonitor2Rom(file: File) {
+    setRunning(false);
+    try {
+      const rom = new Uint8Array(await file.arrayBuffer());
+      await perform(() => core.loadMonitor2Rom(rom));
+    } catch (cause) {
+      setError(describeError(cause));
+    }
+  }
+
   onSettled(() => {
     void loadDemo();
-    return () => setRunning(false);
+    const releaseKeyboard = bindKeyboard({
+      target: window,
+      emit: (event) => perform(() => core.keyEvent(event)),
+    });
+    return () => {
+      setRunning(false);
+      releaseKeyboard();
+    };
   });
 
   return (
@@ -135,11 +153,25 @@ export function App(props: { subtitle?: string }) {
         <label class="cursor-pointer rounded-control bg-accent px-4 py-2 text-sm text-accent-ink">
           Загрузить BIN
           <input
+            id="program-bin"
             type="file"
             class="hidden"
             onChange={(event) => {
               const file = event.currentTarget.files?.[0];
               if (file) void loadFile(file);
+              event.currentTarget.value = "";
+            }}
+          />
+        </label>
+        <label class="cursor-pointer rounded-control bg-surface px-4 py-2 text-sm">
+          Monitor 2 ROM
+          <input
+            id="monitor2-rom"
+            type="file"
+            class="hidden"
+            onChange={(event) => {
+              const file = event.currentTarget.files?.[0];
+              if (file) void loadMonitor2Rom(file);
               event.currentTarget.value = "";
             }}
           />
