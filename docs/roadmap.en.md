@@ -28,7 +28,7 @@ This is not yet a complete model of a real Specialist. Monitor ROM, keyboard, ta
 
 Tasks:
 
-- describe the reference configuration, memory map, ports, and information sources;
+- describe the [reference configuration](reference-machine.en.md), memory map, ports, and information sources;
 - separate RAM, ROM, video memory, and peripheral registers;
 - load ROM externally with size validation and an explicit model selection;
 - implement the keyboard matrix and basic system controller;

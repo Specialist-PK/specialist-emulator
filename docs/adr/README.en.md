@@ -16,3 +16,4 @@ This directory records significant decisions: context, chosen solution, alternat
 | [0008](0008-github-pages-deployment.md)              | GitHub Pages deployment after merging into `main` | Accepted |
 | [0009](0009-temporarily-run-ci-on-ubuntu.md)         | Temporarily run CI only on Ubuntu                 | Accepted |
 | [0010](0010-russian-canonical-documentation.md)      | Russian as the canonical documentation language   | Accepted |
+| [0011](0011-reference-specialist-configuration.md)   | Journal Specialist with Monitor 2 as reference    | Accepted |

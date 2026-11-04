@@ -46,17 +46,17 @@ Zed → specialist-zed → stdio/DAP → specialist-dap → specialist-core
 
 ## Current components
 
-| Component | Responsibility |
-| --- | --- |
-| `crates/core` | Intel 8080, registers, flags, stack, 64 KiB RAM, ports, `Machine`, video memory, and demo program |
-| `crates/core-wasm` | Thin `wasm-bindgen` boundary around `Machine` |
-| `crates/cli` | Console execution of the demo and BIN files |
-| `packages/core-api` | Independent TypeScript `Emulator` contract, state snapshots, and errors |
-| `packages/core-wasm` | WASM initialization and core adaptation to `Emulator` |
-| `packages/app` | Shared Solid UI: display, registers, and execution controls |
-| `apps/web` | Browser application entry point |
-| `apps/native` | Tauri entry point, native IPC, and `Machine` ownership |
-| `tests/e2e` | End-to-end browser UI verification in Chromium |
+| Component            | Responsibility                                                                                    |
+| -------------------- | ------------------------------------------------------------------------------------------------- |
+| `crates/core`        | Intel 8080, registers, flags, stack, 64 KiB RAM, ports, `Machine`, video memory, and demo program |
+| `crates/core-wasm`   | Thin `wasm-bindgen` boundary around `Machine`                                                     |
+| `crates/cli`         | Console execution of the demo and BIN files                                                       |
+| `packages/core-api`  | Independent TypeScript `Emulator` contract, state snapshots, and errors                           |
+| `packages/core-wasm` | WASM initialization and core adaptation to `Emulator`                                             |
+| `packages/app`       | Shared Solid UI: display, registers, and execution controls                                       |
+| `apps/web`           | Browser application entry point                                                                   |
+| `apps/native`        | Tauri entry point, native IPC, and `Machine` ownership                                            |
+| `tests/e2e`          | End-to-end browser UI verification in Chromium                                                    |
 
 Dependency direction:
 
@@ -93,6 +93,8 @@ Batch execution has an instruction limit. It must not be removed: otherwise a lo
 All addresses and ranges are checked at platform boundaries. BIN loading must not silently overwrite memory outside the 16-bit address space.
 
 ## Target machine model
+
+The first reference configuration is defined in [reference-machine.en.md](reference-machine.en.md) and [ADR-0011](adr/0011-reference-specialist-configuration.en.md).
 
 The transition from a demonstration computer to specific models should separate:
 

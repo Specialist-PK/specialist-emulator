@@ -16,3 +16,4 @@
 | [0008](0008-github-pages-deployment.md)              | Деплой на GitHub Pages после merge в `main`           | Принято |
 | [0009](0009-temporarily-run-ci-on-ubuntu.md)         | Временно запускаем CI только на Ubuntu                | Принято |
 | [0010](0010-russian-canonical-documentation.md)      | Русский язык — канонический для документации          | Принято |
+| [0011](0011-reference-specialist-configuration.md)   | Журнальный «Специалист» с Monitor 2 как эталон        | Принято |
