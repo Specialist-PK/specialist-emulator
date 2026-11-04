@@ -10,19 +10,23 @@ Architectural constraints are described in [architecture.en.md](architecture.en.
 
 ## Current state
 
-The architectural prototype is complete:
+The architectural prototype and Stage 1 are complete:
 
 - basic Intel 8080 with all 256 standard opcodes;
-- flat 64 KiB RAM, ports, and video memory;
+- Demo and Monitor 2 memory maps, external ROM loading, and video memory;
+- KR580VV55A system PPI, keyboard matrix, and QWERTY input through the shared UI;
 - CLI, WebAssembly, and Tauri 2;
 - shared Solid UI and a TypeScript contract;
 - built-in demo and BIN loading;
 - unit, WASM, native, and browser checks;
+- identical snapshots and framebuffers for one Monitor 2 program in CLI and WASM;
 - native CLI debugging in Zed through CodeLLDB.
 
-This is not yet a complete model of a real Specialist. Monitor ROM, keyboard, tape, sound, exact timing, clone configurations, and DAP are not implemented.
+This is not yet a complete model of a real Specialist. Tape, sound, exact timing, clone configurations, JCUKEN layout, and DAP are not implemented.
 
 ## Stage 1. Verifiable base machine
+
+**Status:** complete. The criteria are confirmed by boundary tests, real WASM/IPC scenarios, browser E2E, and comparison of full state and video output in CLI and WASM.
 
 **Goal:** replace the flat demonstration model with a documented Specialist configuration.
 
