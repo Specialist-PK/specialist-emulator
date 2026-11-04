@@ -40,6 +40,9 @@ export async function createCore(options: CreateCoreOptions = {}): Promise<Emula
     async loadDemo() {
       return call(() => machine.loadDemo() as EmulatorSnapshot);
     },
+    async loadMonitor2Rom(rom) {
+      return call(() => machine.loadMonitor2Rom(rom) as EmulatorSnapshot);
+    },
     async loadProgram(program, address, entryPoint = address) {
       return call(() => machine.loadProgram(address, entryPoint, program) as EmulatorSnapshot);
     },

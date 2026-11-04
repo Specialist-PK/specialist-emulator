@@ -11,7 +11,8 @@ The project builds on the architecture and development process of [another-usele
 ## Current capabilities
 
 - Base set of 256 Intel 8080 opcodes, registers, flags, and I/O ports;
-- 64 KiB of memory and instruction stepping;
+- 64 KiB address space and instruction stepping;
+- Original Specialist memory map and external loading of a 6 KiB Monitor 2 ROM;
 - Monochrome 384 × 256 display with video memory at `0x9000`;
 - Run, pause, reset, and single-step controls;
 - Registers, flags, and cycle counter display;
@@ -20,7 +21,7 @@ The project builds on the architecture and development process of [another-usele
 - Shared Solid UI for web and desktop;
 - Matching emulation scenarios through WASM and Tauri IPC.
 
-This is an early i8080 core, not yet a complete model of a specific Specialist. Memory is currently a flat RAM array. Monitor ROM, keyboard, tape, sound, computer variants, exact timing, and a DAP debugger are not implemented. Third-party ROMs and programs are not included.
+This is an early i8080 core, not yet a complete model of a specific Specialist. The memory map and Monitor 2 ROM loading are implemented; the system port, keyboard, tape, sound, computer variants, exact timing, and a DAP debugger are not. Third-party ROMs and programs are not included.
 
 ## Structure
 
@@ -81,6 +82,9 @@ cargo run -p specialist-cli -- demo
 
 # Load a binary; addresses accept decimal or 0x-prefixed hexadecimal values
 cargo run -p specialist-cli -- run program.bin 0x0000 0x0000 200000
+
+# Run an external Monitor 2 ROM (exactly 0x1800 bytes, entry point 0xC000)
+cargo run -p specialist-cli -- monitor2 monitor2.rom 200000
 
 # Browser
 bun run dev:web

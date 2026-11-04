@@ -8,7 +8,10 @@ fn main() {
 }
 
 fn run() -> Result<(), String> {
-    let arguments: Vec<String> = std::env::args().skip(1).collect();
+    run_arguments(std::env::args().skip(1).collect())
+}
+
+fn run_arguments(arguments: Vec<String>) -> Result<(), String> {
     let mut machine = Machine::new();
     let maximum_instructions;
 
@@ -27,10 +30,20 @@ fn run() -> Result<(), String> {
                 .map_err(|error| error.to_string())?;
             maximum_instructions = parse_limit(arguments.get(4))?;
         }
+        Some("monitor2") => {
+            let path = arguments.get(1).ok_or_else(usage)?;
+            let rom = std::fs::read(path).map_err(|error| format!("{path}: {error}"))?;
+            machine
+                .load_monitor2_rom(&rom)
+                .map_err(|error| error.to_string())?;
+            maximum_instructions = parse_limit(arguments.get(2))?;
+        }
         _ => return Err(usage()),
     }
 
-    let result = machine.run(maximum_instructions);
+    let result = machine
+        .run(maximum_instructions)
+        .map_err(|error| error.to_string())?;
     print_snapshot(&machine.snapshot());
     println!(
         "executed {} instructions, {} cycles{}",
@@ -77,5 +90,27 @@ fn print_snapshot(snapshot: &Snapshot) {
 }
 
 fn usage() -> String {
-    "usage:\n  specialist demo [instruction-limit]\n  specialist run <file> <address> <entry-point> [instruction-limit]\naddresses accept decimal or 0x-prefixed hexadecimal values".into()
+    "usage:\n  specialist demo [instruction-limit]\n  specialist run <file> <address> <entry-point> [instruction-limit]\n  specialist monitor2 <rom-file> [instruction-limit]\naddresses accept decimal or 0x-prefixed hexadecimal values".into()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn monitor2_command_runs_an_external_rom() {
+        let path =
+            std::env::temp_dir().join(format!("specialist-monitor2-{}.rom", std::process::id()));
+        let mut rom = vec![0; 0x1800];
+        rom[0] = 0x76;
+        std::fs::write(&path, rom).unwrap();
+
+        let result = run_arguments(vec![
+            "monitor2".into(),
+            path.to_string_lossy().into_owned(),
+            "1".into(),
+        ]);
+        std::fs::remove_file(path).ok();
+        assert!(result.is_ok());
+    }
 }

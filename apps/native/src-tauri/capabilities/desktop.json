@@ -7,6 +7,7 @@
   "permissions": [
     "allow-reset",
     "allow-load-demo",
+    "allow-load-monitor2-rom",
     "allow-load-program",
     "allow-run",
     "allow-snapshot",

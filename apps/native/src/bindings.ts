@@ -6,15 +6,16 @@ import { invoke as __TAURI_INVOKE } from "@tauri-apps/api/core";
 export const commands = {
 	reset: () => __TAURI_INVOKE<EmulatorSnapshot>("reset"),
 	loadDemo: () => __TAURI_INVOKE<EmulatorSnapshot>("load_demo"),
+	loadMonitor2Rom: (rom: number[]) => typedError<EmulatorSnapshot, CommandError>(__TAURI_INVOKE("load_monitor2_rom", { rom })),
 	loadProgram: (address: number, entryPoint: number, program: number[]) => typedError<EmulatorSnapshot, CommandError>(__TAURI_INVOKE("load_program", { address, entryPoint, program })),
-	run: (instructions: number) => __TAURI_INVOKE<EmulatorSnapshot>("run", { instructions }),
+	run: (instructions: number) => typedError<EmulatorSnapshot, CommandError>(__TAURI_INVOKE("run", { instructions })),
 	snapshot: () => __TAURI_INVOKE<EmulatorSnapshot>("snapshot"),
 	framebuffer: () => __TAURI_INVOKE<number[]>("framebuffer"),
 	readMemory: (address: number, length: number) => typedError<number[], CommandError>(__TAURI_INVOKE("read_memory", { address, length })),
 };
 
 /* Types */
-export type CommandError = { kind: "invalidAddress"; address: number } | { kind: "rangeOutOfBounds"; address: number; length: number };
+export type CommandError = { kind: "invalidAddress"; address: number } | { kind: "rangeOutOfBounds"; address: number; length: number } | { kind: "memoryNotWritable"; address: number; length: number } | { kind: "invalidRomSize"; expected: number; actual: number } | { kind: "missingRom" };
 
 export type CpuSnapshot = {
 	a: number,

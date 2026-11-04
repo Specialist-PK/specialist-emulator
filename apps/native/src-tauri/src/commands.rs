@@ -51,6 +51,12 @@ pub enum CommandError {
     InvalidAddress { address: u32 },
     #[error("range at {address:#x} with length {length} exceeds the address space")]
     RangeOutOfBounds { address: u32, length: u32 },
+    #[error("memory range at {address:#x} with length {length} is not writable")]
+    MemoryNotWritable { address: u32, length: u32 },
+    #[error("Monitor 2 ROM must be exactly {expected:#x} bytes, got {actual:#x}")]
+    InvalidRomSize { expected: u32, actual: u32 },
+    #[error("Monitor 2 ROM is not loaded")]
+    MissingRom,
 }
 
 impl From<MachineError> for CommandError {
@@ -60,6 +66,13 @@ impl From<MachineError> for CommandError {
             MachineError::RangeOutOfBounds { address, length } => {
                 Self::RangeOutOfBounds { address, length }
             }
+            MachineError::MemoryNotWritable { address, length } => {
+                Self::MemoryNotWritable { address, length }
+            }
+            MachineError::InvalidRomSize { expected, actual } => {
+                Self::InvalidRomSize { expected, actual }
+            }
+            MachineError::MissingRom => Self::MissingRom,
         }
     }
 }
@@ -109,6 +122,17 @@ pub fn load_demo(state: State<'_, AppState>) -> EmulatorSnapshot {
 
 #[tauri::command]
 #[specta::specta]
+pub fn load_monitor2_rom(
+    state: State<'_, AppState>,
+    rom: Vec<u8>,
+) -> Result<EmulatorSnapshot, CommandError> {
+    let mut machine = state.machine.lock().expect("emulator mutex poisoned");
+    machine.load_monitor2_rom(&rom)?;
+    Ok(make_snapshot(&machine))
+}
+
+#[tauri::command]
+#[specta::specta]
 pub fn load_program(
     state: State<'_, AppState>,
     address: u32,
@@ -122,10 +146,13 @@ pub fn load_program(
 
 #[tauri::command]
 #[specta::specta]
-pub fn run(state: State<'_, AppState>, instructions: u32) -> EmulatorSnapshot {
+pub fn run(
+    state: State<'_, AppState>,
+    instructions: u32,
+) -> Result<EmulatorSnapshot, CommandError> {
     let mut machine = state.machine.lock().expect("emulator mutex poisoned");
-    machine.run(instructions);
-    make_snapshot(&machine)
+    machine.run(instructions)?;
+    Ok(make_snapshot(&machine))
 }
 
 #[tauri::command]
