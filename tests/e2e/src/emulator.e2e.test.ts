@@ -83,13 +83,46 @@ describe.runIf(browserPath !== undefined || required)("web emulator", () => {
     await page.waitForFunction(() => document.querySelector("dl")?.textContent?.includes("PC0014"));
 
     await page.getByRole("textbox").fill("0100");
-    await page.locator('input[type="file"]').setInputFiles({
+    await page.locator("#program-bin").setInputFiles({
       name: "halt.bin",
       mimeType: "application/octet-stream",
       buffer: Buffer.from([0x76]),
     });
     await page.waitForFunction(() => document.querySelector("dl")?.textContent?.includes("PC0100"));
     await page.screenshot({ path: "target/e2e-specialist.png", fullPage: true });
+    expect(errors).toEqual([]);
+    await page.close();
+  }, 30_000);
+
+  it("loads Monitor 2 ROM and scans a physical key", async () => {
+    const page = await browser!.newPage();
+    const errors: string[] = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    await page.goto(baseUrl);
+    await page.getByRole("button", { name: "Шаг" }).waitFor();
+    await page.waitForFunction(() => document.querySelector("dl")?.textContent?.includes("PC0000"));
+
+    await page.locator("#monitor2-rom").setInputFiles({
+      name: "monitor2-test.rom",
+      mimeType: "application/octet-stream",
+      buffer: Buffer.alloc(0x1800),
+    });
+    await page.waitForFunction(() => document.querySelector("dl")?.textContent?.includes("PCC000"));
+
+    await page.locator("#program-bin").setInputFiles({
+      name: "keyboard-test.bin",
+      mimeType: "application/octet-stream",
+      buffer: Buffer.from([
+        0x3e, 0x82, 0x32, 0x03, 0xf8, 0xaf, 0x32, 0x00, 0xf8, 0x32, 0x02, 0xf8, 0x3a, 0x01, 0xf8,
+        0xfe, 0xef, 0xc2, 0x15, 0x00, 0x76, 0x76,
+      ]),
+    });
+    await page.waitForFunction(() => document.querySelector("dl")?.textContent?.includes("PC0000"));
+    await page.keyboard.down("a");
+    await page.getByRole("button", { name: "Пуск" }).click();
+    await page.waitForFunction(() => document.querySelector("dl")?.textContent?.includes("PC0015"));
+    await page.keyboard.up("a");
+
     expect(errors).toEqual([]);
     await page.close();
   }, 30_000);

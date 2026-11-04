@@ -84,7 +84,9 @@ Rules:
 - identical events from an identical initial state produce identical port values;
 - simultaneous presses remain in matrix state, but limitations of the two-pass scan are not hidden.
 
-The shared `Emulator.keyEvent(event)` contract is implemented in WASM and Tauri IPC. Valid identifiers are listed in `SPECIALIST_KEYS` from `packages/core-api`; Emu80's `original` matrix maps logical keys to cells. MX, Lik, Eureka, and SP-580 layouts do not replace it automatically. Browser and desktop physical key bindings are outside this contract and remain a separate task.
+The shared `Emulator.keyEvent(event)` contract is implemented in WASM and Tauri IPC. Valid identifiers are listed in `SPECIALIST_KEYS` from `packages/core-api`; Emu80's `original` matrix maps logical keys to cells. MX, Lik, Eureka, and SP-580 layouts do not replace it automatically.
+
+The shared Solid UI translates `KeyboardEvent.code` using Emu80's QWERTY rules, preserves event order, and releases keys on blur and component disposal. Events from editable fields are not intercepted. JCUKEN and Unicode/smart layouts remain separate improvements.
 
 ## ROM and ROM-free mode
 
