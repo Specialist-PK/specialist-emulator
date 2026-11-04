@@ -36,6 +36,11 @@ export function createIpcCore(): Emulator {
         unwrap(await commands.loadProgram(address, entryPoint, Array.from(program))),
       );
     },
+    async keyEvent(event) {
+      return normalize(
+        unwrap(await commands.keyEvent(event.key, event.pressed, event.cycle ?? null)),
+      );
+    },
     async run(instructions) {
       return normalize(unwrap(await commands.run(instructions)));
     },

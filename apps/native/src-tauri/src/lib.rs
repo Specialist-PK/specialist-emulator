@@ -10,6 +10,7 @@ pub fn specta_builder<R: tauri::Runtime>() -> Builder<R> {
         commands::load_demo,
         commands::load_monitor2_rom,
         commands::load_program,
+        commands::key_event,
         commands::run,
         commands::snapshot,
         commands::framebuffer,
@@ -160,5 +161,61 @@ mod tests {
             .deserialize::<serde_json::Value>()
             .unwrap();
         assert_eq!(stopped["cpu"]["pc"], 0xc001);
+    }
+
+    #[test]
+    fn keyboard_input_reaches_the_system_ppi_over_ipc() {
+        let app = mock_builder()
+            .manage(AppState::default())
+            .invoke_handler(specta_builder::<MockRuntime>().invoke_handler())
+            .build(context())
+            .expect("failed to build app");
+        let webview = WebviewWindowBuilder::new(&app, "main", Default::default())
+            .build()
+            .unwrap();
+        invoke(
+            &webview,
+            "load_monitor2_rom",
+            json!({ "rom": vec![0; 0x1800] }),
+        )
+        .expect("load_monitor2_rom failed");
+        invoke(
+            &webview,
+            "load_program",
+            json!({
+                "address": 0,
+                "entryPoint": 0,
+                "program": [
+                    0x3e, 0x82, 0x32, 0x03, 0xf8, 0xaf, 0x32, 0x00, 0xf8,
+                    0x32, 0x02, 0xf8, 0x3a, 0x01, 0xf8, 0x32, 0x00, 0x01, 0x76
+                ]
+            }),
+        )
+        .expect("load_program failed");
+        invoke(
+            &webview,
+            "key_event",
+            json!({ "key": "a", "pressed": true, "cycle": null }),
+        )
+        .expect("key_event failed");
+        invoke(&webview, "run", json!({ "instructions": 8 })).expect("run failed");
+
+        let result = invoke(
+            &webview,
+            "read_memory",
+            json!({ "address": 0x100, "length": 1 }),
+        )
+        .expect("read_memory failed")
+        .deserialize::<Vec<u8>>()
+        .unwrap();
+        assert_eq!(result, [0xef]);
+
+        let error = invoke(
+            &webview,
+            "key_event",
+            json!({ "key": "invalid", "pressed": true, "cycle": null }),
+        )
+        .expect_err("an unknown key must be rejected");
+        assert_eq!(error["kind"], "unknownKey");
     }
 }

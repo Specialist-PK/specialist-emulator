@@ -74,7 +74,9 @@ Reverse dependencies are forbidden. Shared UI knows nothing about WASM, Tauri, o
 
 `Machine` combines the CPU, system bus, selected memory map, and cycle counter. All 256 base Intel 8080 opcodes and 256 I/O ports are implemented. Video memory starts at `0x9000`; the display is 384 × 256 pixels.
 
-`Demo` mode retains flat RAM for the built-in program and arbitrary BIN files. In `Monitor2` mode, `0000–BFFF` is writable RAM and `C000–D7FF` is write-protected ROM. An external ROM of exactly `0x1800` bytes is loaded at `C000`; execution without the required ROM returns an error before the first instruction. Unassigned addresses and the system port remain separate tasks.
+`Demo` mode retains flat RAM for the built-in program and arbitrary BIN files. In `Monitor2` mode, `0000–BFFF` is writable RAM and `C000–D7FF` is write-protected ROM. An external ROM of exactly `0x1800` bytes is loaded at `C000`; execution without the required ROM returns an error before the first instruction.
+
+The KR580VV55A system PPI is connected to the bus at `F800–FFFF`, with registers repeated every 4 bytes. The keyboard matrix and `KeyEvent` queue live in the core and do not depend on host events. Unassigned addresses, physical key bindings, and electrical ghosting remain separate tasks.
 
 Memory and port access goes through the `Bus` abstraction. New devices must connect through it rather than bypass it with direct CPU access.
 

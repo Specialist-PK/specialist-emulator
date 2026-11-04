@@ -1,4 +1,10 @@
-use crate::cpu::{Bus, Cpu};
+use std::collections::VecDeque;
+
+use crate::{
+    cpu::{Bus, Cpu},
+    keyboard::KeyEvent,
+    system_ppi::SystemPpi,
+};
 
 pub const ADDRESS_SPACE_SIZE: usize = 65_536;
 pub const SCREEN_ADDRESS: u16 = 0x9000;
@@ -59,12 +65,17 @@ pub enum MachineError {
     InvalidRomSize { expected: u32, actual: u32 },
     #[error("Monitor 2 ROM is not loaded")]
     MissingRom,
+    #[error("unknown Specialist key: {key}")]
+    UnknownKey { key: String },
+    #[error("key event cycle {cycle} is in the past")]
+    EventCycleInPast { cycle: u32 },
 }
 
 pub struct SystemBus {
     memory: Box<[u8; ADDRESS_SPACE_SIZE]>,
     ports: [u8; 256],
     model: MachineModel,
+    ppi: SystemPpi,
 }
 
 impl SystemBus {
@@ -73,6 +84,7 @@ impl SystemBus {
             memory: Box::new([0; ADDRESS_SPACE_SIZE]),
             ports: [0; 256],
             model,
+            ppi: SystemPpi::default(),
         }
     }
 
@@ -89,11 +101,17 @@ impl Default for SystemBus {
 
 impl Bus for SystemBus {
     fn read(&self, address: u16) -> u8 {
-        self.memory[address as usize]
+        if self.model == MachineModel::Monitor2 && address >= 0xf800 {
+            self.ppi.read((address & 3) as u8)
+        } else {
+            self.memory[address as usize]
+        }
     }
 
     fn write(&mut self, address: u16, value: u8) {
-        if self.is_ram(address) {
+        if self.model == MachineModel::Monitor2 && address >= 0xf800 {
+            self.ppi.write((address & 3) as u8, value);
+        } else if self.is_ram(address) {
             self.memory[address as usize] = value;
         }
     }
@@ -113,6 +131,7 @@ pub struct Machine {
     cycles: u64,
     model: MachineModel,
     rom_loaded: bool,
+    key_events: VecDeque<KeyEvent>,
 }
 
 impl Default for Machine {
@@ -123,6 +142,7 @@ impl Default for Machine {
             cycles: 0,
             model: MachineModel::Demo,
             rom_loaded: false,
+            key_events: VecDeque::new(),
         }
     }
 }
@@ -148,6 +168,8 @@ impl Machine {
         };
         self.cycles = 0;
         self.bus.ports = [0; 256];
+        self.bus.ppi.reset();
+        self.key_events.clear();
     }
 
     pub fn clear_memory(&mut self) {
@@ -160,6 +182,38 @@ impl Machine {
         }
     }
 
+    pub fn key_event(&mut self, event: KeyEvent) -> Result<(), MachineError> {
+        if let Some(cycle) = event.cycle {
+            if u64::from(cycle) < self.cycles {
+                return Err(MachineError::EventCycleInPast { cycle });
+            }
+            let position = self
+                .key_events
+                .iter()
+                .position(|queued| {
+                    queued
+                        .cycle
+                        .map_or(false, |queued_cycle| queued_cycle > cycle)
+                })
+                .unwrap_or(self.key_events.len());
+            self.key_events.insert(position, event);
+        } else {
+            self.bus.ppi.set_key(event.key, event.pressed);
+        }
+        Ok(())
+    }
+
+    fn apply_due_key_events(&mut self) {
+        while self.key_events.front().is_some_and(|event| {
+            event
+                .cycle
+                .is_some_and(|cycle| u64::from(cycle) <= self.cycles)
+        }) {
+            let event = self.key_events.pop_front().expect("a queued event exists");
+            self.bus.ppi.set_key(event.key, event.pressed);
+        }
+    }
+
     fn ensure_rom_loaded(&self) -> Result<(), MachineError> {
         if self.model == MachineModel::Monitor2 && !self.rom_loaded {
             return Err(MachineError::MissingRom);
@@ -169,6 +223,7 @@ impl Machine {
 
     pub fn step(&mut self) -> Result<u32, MachineError> {
         self.ensure_rom_loaded()?;
+        self.apply_due_key_events();
         let cycles = self.cpu.step(&mut self.bus);
         self.cycles = self.cycles.wrapping_add(cycles as u64);
         Ok(cycles)
@@ -278,6 +333,7 @@ fn checked_range(address: u32, length: u32) -> Result<std::ops::Range<usize>, Ma
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::keyboard::Key;
 
     #[test]
     fn demo_draws_through_emulated_instructions_and_halts() {
@@ -413,5 +469,54 @@ mod tests {
             machine.read_memory(MONITOR2_ROM_ADDRESS as u32, 1).unwrap(),
             &[0x76]
         );
+    }
+
+    #[test]
+    fn monitor2_ppi_registers_mirror_every_four_bytes() {
+        let mut bus = SystemBus::with_model(MachineModel::Monitor2);
+        bus.write(0xf803, 0x80);
+        bus.write(0xf800, 0x5a);
+        assert_eq!(bus.read(0xf800), 0x5a);
+        assert_eq!(bus.read(0xf804), 0x5a);
+        assert_eq!(bus.read(0xfffc), 0x5a);
+        assert_eq!(bus.read(0xf803), 0xff);
+        assert_eq!(bus.read(0xffff), 0xff);
+    }
+
+    #[test]
+    fn monitor2_key_events_wait_for_their_cycle_and_reset_clears_input() {
+        let mut machine = Machine::new();
+        machine
+            .load_monitor2_rom(&vec![0; MONITOR2_ROM_SIZE])
+            .unwrap();
+        machine.bus.ppi.write(3, 0x82);
+        machine.bus.ppi.write(0, 0);
+        machine.bus.ppi.write(2, 0);
+        machine
+            .key_event(KeyEvent {
+                key: Key::A,
+                pressed: true,
+                cycle: Some(4),
+            })
+            .unwrap();
+
+        assert_eq!(machine.bus.ppi.read(1), 0xff);
+        machine.step().unwrap();
+        assert_eq!(machine.snapshot().cycles, 4);
+        assert_eq!(machine.bus.ppi.read(1), 0xff);
+        machine.step().unwrap();
+        assert_eq!(machine.bus.ppi.read(1), 0xef);
+        assert_eq!(
+            machine.key_event(KeyEvent {
+                key: Key::Q,
+                pressed: true,
+                cycle: Some(0),
+            }),
+            Err(MachineError::EventCycleInPast { cycle: 0 })
+        );
+
+        machine.reset();
+        assert_eq!(machine.bus.ppi.read(1), 0xff);
+        assert!(machine.key_events.is_empty());
     }
 }

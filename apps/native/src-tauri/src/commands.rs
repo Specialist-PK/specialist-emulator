@@ -57,6 +57,10 @@ pub enum CommandError {
     InvalidRomSize { expected: u32, actual: u32 },
     #[error("Monitor 2 ROM is not loaded")]
     MissingRom,
+    #[error("unknown Specialist key: {key}")]
+    UnknownKey { key: String },
+    #[error("key event cycle {cycle} is in the past")]
+    EventCycleInPast { cycle: u32 },
 }
 
 impl From<MachineError> for CommandError {
@@ -73,6 +77,8 @@ impl From<MachineError> for CommandError {
                 Self::InvalidRomSize { expected, actual }
             }
             MachineError::MissingRom => Self::MissingRom,
+            MachineError::UnknownKey { key } => Self::UnknownKey { key },
+            MachineError::EventCycleInPast { cycle } => Self::EventCycleInPast { cycle },
         }
     }
 }
@@ -141,6 +147,26 @@ pub fn load_program(
 ) -> Result<EmulatorSnapshot, CommandError> {
     let mut machine = state.machine.lock().expect("emulator mutex poisoned");
     machine.load_program(address, entry_point, &program)?;
+    Ok(make_snapshot(&machine))
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn key_event(
+    state: State<'_, AppState>,
+    key: String,
+    pressed: bool,
+    cycle: Option<u32>,
+) -> Result<EmulatorSnapshot, CommandError> {
+    let key = key
+        .parse()
+        .map_err(|key| MachineError::UnknownKey { key })?;
+    let mut machine = state.machine.lock().expect("emulator mutex poisoned");
+    machine.key_event(specialist_core::KeyEvent {
+        key,
+        pressed,
+        cycle,
+    })?;
     Ok(make_snapshot(&machine))
 }
 

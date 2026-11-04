@@ -9,6 +9,7 @@
     "allow-load-demo",
     "allow-load-monitor2-rom",
     "allow-load-program",
+    "allow-key-event",
     "allow-run",
     "allow-snapshot",
     "allow-framebuffer",
