@@ -88,6 +88,9 @@ cargo run -p specialist-cli -- run program.bin 0x0000 0x0000 200000
 # Run an external Monitor 2 ROM (exactly 0x1800 bytes, entry point 0xC000)
 cargo run -p specialist-cli -- monitor2 monitor2.rom 200000
 
+# Print the CPU snapshot and full framebuffer as JSON for automated checks
+cargo run -p specialist-cli -- monitor2 monitor2.rom 200000 --json
+
 # Browser
 bun run dev:web
 bun run build:web

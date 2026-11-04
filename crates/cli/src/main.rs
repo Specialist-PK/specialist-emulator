@@ -1,4 +1,77 @@
-use specialist_core::{Machine, Snapshot};
+use serde::Serialize;
+use specialist_core::{Cpu, Flags, Machine, Snapshot};
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct FlagsOutput {
+    sign: bool,
+    zero: bool,
+    auxiliary_carry: bool,
+    parity: bool,
+    carry: bool,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CpuOutput {
+    a: u8,
+    b: u8,
+    c: u8,
+    d: u8,
+    e: u8,
+    h: u8,
+    l: u8,
+    sp: u16,
+    pc: u16,
+    flags: FlagsOutput,
+    interrupts_enabled: bool,
+    halted: bool,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct SnapshotOutput {
+    cpu: CpuOutput,
+    cycles: u64,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct JsonOutput<'a> {
+    snapshot: SnapshotOutput,
+    framebuffer: &'a [u8],
+}
+
+impl From<Flags> for FlagsOutput {
+    fn from(flags: Flags) -> Self {
+        Self {
+            sign: flags.sign,
+            zero: flags.zero,
+            auxiliary_carry: flags.auxiliary_carry,
+            parity: flags.parity,
+            carry: flags.carry,
+        }
+    }
+}
+
+impl From<Cpu> for CpuOutput {
+    fn from(cpu: Cpu) -> Self {
+        Self {
+            a: cpu.a,
+            b: cpu.b,
+            c: cpu.c,
+            d: cpu.d,
+            e: cpu.e,
+            h: cpu.h,
+            l: cpu.l,
+            sp: cpu.sp,
+            pc: cpu.pc,
+            flags: cpu.flags.into(),
+            interrupts_enabled: cpu.interrupts_enabled,
+            halted: cpu.halted,
+        }
+    }
+}
 
 fn main() {
     if let Err(error) = run() {
@@ -41,17 +114,44 @@ fn run_arguments(arguments: Vec<String>) -> Result<(), String> {
         _ => return Err(usage()),
     }
 
+    let json = match arguments.first().map(String::as_str) {
+        Some("monitor2") => match arguments.get(3).map(String::as_str) {
+            Some("--json") => true,
+            Some(_) => return Err(usage()),
+            None => false,
+        },
+        _ => false,
+    };
     let result = machine
         .run(maximum_instructions)
         .map_err(|error| error.to_string())?;
-    print_snapshot(&machine.snapshot());
-    println!(
-        "executed {} instructions, {} cycles{}",
-        result.instructions,
-        result.cycles,
-        if result.halted { ", halted" } else { "" }
-    );
+    if json {
+        print_json(&machine);
+    } else {
+        print_snapshot(&machine.snapshot());
+        println!(
+            "executed {} instructions, {} cycles{}",
+            result.instructions,
+            result.cycles,
+            if result.halted { ", halted" } else { "" }
+        );
+    }
     Ok(())
+}
+
+fn print_json(machine: &Machine) {
+    let snapshot = machine.snapshot();
+    let output = JsonOutput {
+        snapshot: SnapshotOutput {
+            cpu: snapshot.cpu.into(),
+            cycles: snapshot.cycles,
+        },
+        framebuffer: machine.framebuffer(),
+    };
+    println!(
+        "{}",
+        serde_json::to_string(&output).expect("serializing the CLI snapshot")
+    );
 }
 
 fn parse_limit(value: Option<&String>) -> Result<u32, String> {
@@ -90,7 +190,7 @@ fn print_snapshot(snapshot: &Snapshot) {
 }
 
 fn usage() -> String {
-    "usage:\n  specialist demo [instruction-limit]\n  specialist run <file> <address> <entry-point> [instruction-limit]\n  specialist monitor2 <rom-file> [instruction-limit]\naddresses accept decimal or 0x-prefixed hexadecimal values".into()
+    "usage:\n  specialist demo [instruction-limit]\n  specialist run <file> <address> <entry-point> [instruction-limit]\n  specialist monitor2 <rom-file> [instruction-limit] [--json]\naddresses accept decimal or 0x-prefixed hexadecimal values".into()
 }
 
 #[cfg(test)]

@@ -74,6 +74,7 @@ bun run build:native -- --no-bundle
 cargo run -p specialist-cli -- demo
 cargo run -p specialist-cli -- run program.bin 0x0000 0x0000 200000
 cargo run -p specialist-cli -- monitor2 monitor2.rom 200000
+cargo run -p specialist-cli -- monitor2 monitor2.rom 200000 --json
 ```
 
 Before finishing, run `bun run format:check`, `bun run format:check:rust`, `bun run lint`, `bun run test:rust`, `bun run typecheck`, and `bun run test`. For core or WASM changes also run `bun run check:wasm` and `bun run test:wasm`; for web changes run `bun run build:web` and `bun run test:e2e`; for Tauri changes run `bun run test:native` and `bun run build:native -- --no-bundle`. Explicitly report anything that could not be checked.

@@ -88,6 +88,9 @@ cargo run -p specialist-cli -- run program.bin 0x0000 0x0000 200000
 # Запустить внешний Monitor 2 ROM (ровно 0x1800 байт, старт с 0xC000)
 cargo run -p specialist-cli -- monitor2 monitor2.rom 200000
 
+# Вывести snapshot CPU и полный framebuffer в JSON для автоматических проверок
+cargo run -p specialist-cli -- monitor2 monitor2.rom 200000 --json
+
 # Браузерная версия
 bun run dev:web
 bun run build:web

@@ -74,6 +74,7 @@ bun run build:native -- --no-bundle
 cargo run -p specialist-cli -- demo
 cargo run -p specialist-cli -- run program.bin 0x0000 0x0000 200000
 cargo run -p specialist-cli -- monitor2 monitor2.rom 200000
+cargo run -p specialist-cli -- monitor2 monitor2.rom 200000 --json
 ```
 
 Перед завершением запускайте `bun run format:check`, `bun run format:check:rust`, `bun run lint`, `bun run test:rust`, `bun run typecheck` и `bun run test`. При изменении ядра или WASM также `bun run check:wasm` и `bun run test:wasm`; при изменении web — `bun run build:web` и `bun run test:e2e`; при изменении Tauri — `bun run test:native` и `bun run build:native -- --no-bundle`. Всё, что не удалось проверить, указывайте явно.
