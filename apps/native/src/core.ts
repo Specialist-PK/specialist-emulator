@@ -28,13 +28,16 @@ export function createIpcCore(): Emulator {
     async loadDemo() {
       return normalize(await commands.loadDemo());
     },
+    async loadMonitor2Rom(rom) {
+      return normalize(unwrap(await commands.loadMonitor2Rom(Array.from(rom))));
+    },
     async loadProgram(program, address, entryPoint = address) {
       return normalize(
         unwrap(await commands.loadProgram(address, entryPoint, Array.from(program))),
       );
     },
     async run(instructions) {
-      return normalize(await commands.run(instructions));
+      return normalize(unwrap(await commands.run(instructions)));
     },
     async snapshot() {
       return normalize(await commands.snapshot());

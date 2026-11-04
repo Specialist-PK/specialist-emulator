@@ -46,17 +46,17 @@ Zed → specialist-zed → stdio/DAP → specialist-dap → specialist-core
 
 ## Current components
 
-| Component            | Responsibility                                                                                    |
-| -------------------- | ------------------------------------------------------------------------------------------------- |
-| `crates/core`        | Intel 8080, registers, flags, stack, 64 KiB RAM, ports, `Machine`, video memory, and demo program |
-| `crates/core-wasm`   | Thin `wasm-bindgen` boundary around `Machine`                                                     |
-| `crates/cli`         | Console execution of the demo and BIN files                                                       |
-| `packages/core-api`  | Independent TypeScript `Emulator` contract, state snapshots, and errors                           |
-| `packages/core-wasm` | WASM initialization and core adaptation to `Emulator`                                             |
-| `packages/app`       | Shared Solid UI: display, registers, and execution controls                                       |
-| `apps/web`           | Browser application entry point                                                                   |
-| `apps/native`        | Tauri entry point, native IPC, and `Machine` ownership                                            |
-| `tests/e2e`          | End-to-end browser UI verification in Chromium                                                    |
+| Component            | Responsibility                                                                                      |
+| -------------------- | --------------------------------------------------------------------------------------------------- |
+| `crates/core`        | Intel 8080, registers, flags, stack, Demo/Monitor 2 memory maps, ports, `Machine`, and video memory |
+| `crates/core-wasm`   | Thin `wasm-bindgen` boundary around `Machine`                                                       |
+| `crates/cli`         | Console execution of the demo, BIN files, and an external Monitor 2 ROM                             |
+| `packages/core-api`  | Independent TypeScript `Emulator` contract, state snapshots, and errors                             |
+| `packages/core-wasm` | WASM initialization and core adaptation to `Emulator`                                               |
+| `packages/app`       | Shared Solid UI: display, registers, and execution controls                                         |
+| `apps/web`           | Browser application entry point                                                                     |
+| `apps/native`        | Tauri entry point, native IPC, and `Machine` ownership                                              |
+| `tests/e2e`          | End-to-end browser UI verification in Chromium                                                      |
 
 Dependency direction:
 
@@ -72,9 +72,9 @@ Reverse dependencies are forbidden. Shared UI knows nothing about WASM, Tauri, o
 
 ### Processor and memory
 
-Currently `Machine` combines the CPU, system bus, flat RAM, and cycle counter. All 256 base Intel 8080 opcodes and 256 I/O ports are implemented. Video memory starts at `0x9000`; the display is 384 × 256 pixels.
+`Machine` combines the CPU, system bus, selected memory map, and cycle counter. All 256 base Intel 8080 opcodes and 256 I/O ports are implemented. Video memory starts at `0x9000`; the display is 384 × 256 pixels.
 
-This is an interim model. Flat RAM must not become a permanent compatibility standard: the target memory map is defined by the selected machine configuration.
+`Demo` mode retains flat RAM for the built-in program and arbitrary BIN files. In `Monitor2` mode, `0000–BFFF` is writable RAM and `C000–D7FF` is write-protected ROM. An external ROM of exactly `0x1800` bytes is loaded at `C000`; execution without the required ROM returns an error before the first instruction. Unassigned addresses and the system port remain separate tasks.
 
 Memory and port access goes through the `Bus` abstraction. New devices must connect through it rather than bypass it with direct CPU access.
 

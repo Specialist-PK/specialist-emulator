@@ -8,6 +8,7 @@ pub fn specta_builder<R: tauri::Runtime>() -> Builder<R> {
     Builder::<R>::new().commands(collect_commands![
         commands::reset,
         commands::load_demo,
+        commands::load_monitor2_rom,
         commands::load_program,
         commands::run,
         commands::snapshot,
@@ -130,5 +131,34 @@ mod tests {
         assert_eq!(frame.len(), 12_288);
         assert_eq!(frame[1], 0x91);
         assert_eq!(frame[12_287], 0x40);
+    }
+
+    #[test]
+    fn monitor2_rom_loads_and_runs_over_ipc() {
+        let app = mock_builder()
+            .manage(AppState::default())
+            .invoke_handler(specta_builder::<MockRuntime>().invoke_handler())
+            .build(context())
+            .expect("failed to build app");
+        let webview = WebviewWindowBuilder::new(&app, "main", Default::default())
+            .build()
+            .unwrap();
+
+        let error = invoke(&webview, "load_monitor2_rom", json!({ "rom": [0] }))
+            .expect_err("a short ROM must be rejected");
+        assert_eq!(error["kind"], "invalidRomSize");
+
+        let rom = vec![0; 0x1800];
+        let loaded = invoke(&webview, "load_monitor2_rom", json!({ "rom": rom }))
+            .expect("load_monitor2_rom failed")
+            .deserialize::<serde_json::Value>()
+            .unwrap();
+        assert_eq!(loaded["cpu"]["pc"], 0xc000);
+
+        let stopped = invoke(&webview, "run", json!({ "instructions": 1 }))
+            .expect("run failed")
+            .deserialize::<serde_json::Value>()
+            .unwrap();
+        assert_eq!(stopped["cpu"]["pc"], 0xc001);
     }
 }

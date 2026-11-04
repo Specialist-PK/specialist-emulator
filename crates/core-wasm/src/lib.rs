@@ -7,7 +7,10 @@ use wasm_bindgen::prelude::*;
 const TS_ERROR: &str = r#"
 export type WasmEmulatorError =
   | { kind: "invalidAddress"; address: number }
-  | { kind: "rangeOutOfBounds"; address: number; length: number };
+  | { kind: "rangeOutOfBounds"; address: number; length: number }
+  | { kind: "memoryNotWritable"; address: number; length: number }
+  | { kind: "invalidRomSize"; expected: number; actual: number }
+  | { kind: "missingRom" };
 "#;
 
 #[derive(Serialize)]
@@ -87,6 +90,19 @@ fn error_object(error: MachineError) -> JsValue {
             set("address", address.into());
             set("length", length.into());
         }
+        MachineError::MemoryNotWritable { address, length } => {
+            set("kind", "memoryNotWritable".into());
+            set("address", address.into());
+            set("length", length.into());
+        }
+        MachineError::InvalidRomSize { expected, actual } => {
+            set("kind", "invalidRomSize".into());
+            set("expected", expected.into());
+            set("actual", actual.into());
+        }
+        MachineError::MissingRom => {
+            set("kind", "missingRom".into());
+        }
     }
     object.into()
 }
@@ -116,6 +132,12 @@ impl WasmEmulator {
         snapshot(&self.machine)
     }
 
+    #[wasm_bindgen(js_name = loadMonitor2Rom)]
+    pub fn load_monitor2_rom(&mut self, rom: &[u8]) -> Result<JsValue, JsValue> {
+        self.machine.load_monitor2_rom(rom).map_err(error_object)?;
+        snapshot(&self.machine)
+    }
+
     #[wasm_bindgen(js_name = loadProgram)]
     pub fn load_program(
         &mut self,
@@ -130,7 +152,7 @@ impl WasmEmulator {
     }
 
     pub fn run(&mut self, instructions: u32) -> Result<JsValue, JsValue> {
-        self.machine.run(instructions);
+        self.machine.run(instructions).map_err(error_object)?;
         snapshot(&self.machine)
     }
 

@@ -3,6 +3,7 @@ fn main() {
         tauri_build::Attributes::new().app_manifest(tauri_build::AppManifest::new().commands(&[
             "reset",
             "load_demo",
+            "load_monitor2_rom",
             "load_program",
             "run",
             "snapshot",

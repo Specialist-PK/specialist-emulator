@@ -5,6 +5,11 @@ pub const SCREEN_ADDRESS: u16 = 0x9000;
 pub const SCREEN_WIDTH: usize = 384;
 pub const SCREEN_HEIGHT: usize = 256;
 pub const FRAMEBUFFER_SIZE: usize = SCREEN_WIDTH / 8 * SCREEN_HEIGHT;
+pub const MONITOR2_ROM_ADDRESS: u16 = 0xc000;
+pub const MONITOR2_ROM_SIZE: usize = 0x1800;
+
+const RAM_END: u16 = 0xbfff;
+const MONITOR2_ROM_END: u16 = MONITOR2_ROM_ADDRESS + MONITOR2_ROM_SIZE as u16 - 1;
 
 pub const DEMO_PROGRAM: &[u8] = &[
     0x31, 0xff, 0x8f, // LXI SP,8FFF
@@ -34,25 +39,51 @@ pub struct RunResult {
     pub halted: bool,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MachineModel {
+    Demo,
+    Monitor2,
+}
+
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
 pub enum MachineError {
     #[error("address {address:#x} is outside the 16-bit address space")]
     InvalidAddress { address: u32 },
     #[error("range at {address:#x} with length {length} exceeds the 16-bit address space")]
     RangeOutOfBounds { address: u32, length: u32 },
+    #[error(
+        "memory range at {address:#x} with length {length} is not writable in this configuration"
+    )]
+    MemoryNotWritable { address: u32, length: u32 },
+    #[error("Monitor 2 ROM must be exactly {expected:#x} bytes, got {actual:#x}")]
+    InvalidRomSize { expected: u32, actual: u32 },
+    #[error("Monitor 2 ROM is not loaded")]
+    MissingRom,
 }
 
 pub struct SystemBus {
     memory: Box<[u8; ADDRESS_SPACE_SIZE]>,
     ports: [u8; 256],
+    model: MachineModel,
+}
+
+impl SystemBus {
+    fn with_model(model: MachineModel) -> Self {
+        Self {
+            memory: Box::new([0; ADDRESS_SPACE_SIZE]),
+            ports: [0; 256],
+            model,
+        }
+    }
+
+    fn is_ram(&self, address: u16) -> bool {
+        self.model == MachineModel::Demo || address <= RAM_END
+    }
 }
 
 impl Default for SystemBus {
     fn default() -> Self {
-        Self {
-            memory: Box::new([0; ADDRESS_SPACE_SIZE]),
-            ports: [0; 256],
-        }
+        Self::with_model(MachineModel::Demo)
     }
 }
 
@@ -62,7 +93,9 @@ impl Bus for SystemBus {
     }
 
     fn write(&mut self, address: u16, value: u8) {
-        self.memory[address as usize] = value;
+        if self.is_ram(address) {
+            self.memory[address as usize] = value;
+        }
     }
 
     fn input(&self, port: u8) -> u8 {
@@ -78,6 +111,8 @@ pub struct Machine {
     cpu: Cpu,
     bus: SystemBus,
     cycles: u64,
+    model: MachineModel,
+    rom_loaded: bool,
 }
 
 impl Default for Machine {
@@ -86,6 +121,8 @@ impl Default for Machine {
             cpu: Cpu::default(),
             bus: SystemBus::default(),
             cycles: 0,
+            model: MachineModel::Demo,
+            rom_loaded: false,
         }
     }
 }
@@ -95,34 +132,61 @@ impl Machine {
         Self::default()
     }
 
+    pub fn new_monitor2() -> Self {
+        let mut machine = Self::default();
+        machine.model = MachineModel::Monitor2;
+        machine.bus.model = MachineModel::Monitor2;
+        machine.reset();
+        machine
+    }
+
     pub fn reset(&mut self) {
         self.cpu = Cpu::default();
+        self.cpu.pc = match self.model {
+            MachineModel::Demo => 0,
+            MachineModel::Monitor2 => MONITOR2_ROM_ADDRESS,
+        };
         self.cycles = 0;
         self.bus.ports = [0; 256];
     }
 
     pub fn clear_memory(&mut self) {
-        self.bus.memory.fill(0);
+        match self.model {
+            MachineModel::Demo => self.bus.memory.fill(0),
+            MachineModel::Monitor2 => {
+                self.bus.memory[..MONITOR2_ROM_ADDRESS as usize].fill(0);
+                self.bus.memory[MONITOR2_ROM_END as usize + 1..].fill(0);
+            }
+        }
     }
 
-    pub fn step(&mut self) -> u32 {
+    fn ensure_rom_loaded(&self) -> Result<(), MachineError> {
+        if self.model == MachineModel::Monitor2 && !self.rom_loaded {
+            return Err(MachineError::MissingRom);
+        }
+        Ok(())
+    }
+
+    pub fn step(&mut self) -> Result<u32, MachineError> {
+        self.ensure_rom_loaded()?;
         let cycles = self.cpu.step(&mut self.bus);
         self.cycles = self.cycles.wrapping_add(cycles as u64);
-        cycles
+        Ok(cycles)
     }
 
-    pub fn run(&mut self, maximum_instructions: u32) -> RunResult {
+    pub fn run(&mut self, maximum_instructions: u32) -> Result<RunResult, MachineError> {
+        self.ensure_rom_loaded()?;
         let mut instructions = 0;
         let mut cycles: u32 = 0;
         while instructions < maximum_instructions && !self.cpu.halted {
-            cycles = cycles.wrapping_add(self.step());
+            cycles = cycles.wrapping_add(self.step()?);
             instructions += 1;
         }
-        RunResult {
+        Ok(RunResult {
             instructions,
             cycles,
             halted: self.cpu.halted,
-        }
+        })
     }
 
     pub fn load_program(
@@ -137,13 +201,44 @@ impl Machine {
                 address: entry_point,
             });
         }
+        if self.model == MachineModel::Monitor2
+            && destination
+                .clone()
+                .any(|index| !self.bus.is_ram(index as u16))
+        {
+            return Err(MachineError::MemoryNotWritable {
+                address,
+                length: program.len() as u32,
+            });
+        }
         self.bus.memory[destination].copy_from_slice(program);
         self.cpu.pc = entry_point as u16;
         self.cpu.halted = false;
         Ok(())
     }
 
+    pub fn load_monitor2_rom(&mut self, rom: &[u8]) -> Result<(), MachineError> {
+        if rom.len() != MONITOR2_ROM_SIZE {
+            return Err(MachineError::InvalidRomSize {
+                expected: MONITOR2_ROM_SIZE as u32,
+                actual: rom.len() as u32,
+            });
+        }
+        self.model = MachineModel::Monitor2;
+        self.bus.model = MachineModel::Monitor2;
+        self.rom_loaded = false;
+        self.reset();
+        self.clear_memory();
+        let start = MONITOR2_ROM_ADDRESS as usize;
+        self.bus.memory[start..start + MONITOR2_ROM_SIZE].copy_from_slice(rom);
+        self.rom_loaded = true;
+        Ok(())
+    }
+
     pub fn load_demo(&mut self) {
+        self.model = MachineModel::Demo;
+        self.bus.model = MachineModel::Demo;
+        self.rom_loaded = false;
         self.reset();
         self.clear_memory();
         self.load_program(0, 0, DEMO_PROGRAM)
@@ -188,7 +283,7 @@ mod tests {
     fn demo_draws_through_emulated_instructions_and_halts() {
         let mut machine = Machine::new();
         machine.load_demo();
-        let result = machine.run(200_000);
+        let result = machine.run(200_000).unwrap();
 
         assert!(result.halted);
         assert_eq!(machine.snapshot().cpu.pc, 0x0014);
@@ -228,11 +323,95 @@ mod tests {
     fn reset_preserves_the_loaded_program() {
         let mut machine = Machine::new();
         machine.load_program(0x100, 0x100, &[0x76]).unwrap();
-        machine.step();
+        machine.step().unwrap();
         assert!(machine.snapshot().cpu.halted);
 
         machine.reset();
         assert_eq!(machine.snapshot().cpu.pc, 0);
         assert_eq!(machine.read_memory(0x100, 1).unwrap(), &[0x76]);
+    }
+
+    #[test]
+    fn monitor2_ram_is_writable_and_rom_is_protected() {
+        let mut bus = SystemBus::with_model(MachineModel::Monitor2);
+        for address in [
+            0x0000, 0x3fff, 0x4000, 0x7fff, 0x8000, 0x8fff, 0x9000, 0xbfff,
+        ] {
+            bus.write(address, 0xa5);
+            assert_eq!(bus.read(address), 0xa5, "RAM address {address:#x}");
+        }
+        for address in [MONITOR2_ROM_ADDRESS, MONITOR2_ROM_END] {
+            bus.write(address, 0xa5);
+            assert_eq!(bus.read(address), 0, "ROM address {address:#x}");
+        }
+    }
+
+    #[test]
+    fn monitor2_requires_the_exact_rom_before_execution() {
+        let mut machine = Machine::new_monitor2();
+        assert_eq!(machine.run(1), Err(MachineError::MissingRom));
+        assert_eq!(machine.snapshot().cycles, 0);
+        assert_eq!(
+            machine.load_monitor2_rom(&[0; 17]),
+            Err(MachineError::InvalidRomSize {
+                expected: MONITOR2_ROM_SIZE as u32,
+                actual: 17
+            })
+        );
+        assert_eq!(machine.step(), Err(MachineError::MissingRom));
+    }
+
+    #[test]
+    fn monitor2_loads_rom_and_prevents_cpu_writes_to_it() {
+        let mut machine = Machine::new();
+        let mut rom = vec![0; MONITOR2_ROM_SIZE];
+        rom[MONITOR2_ROM_SIZE - 1] = 0x7e;
+        machine.load_monitor2_rom(&rom).unwrap();
+        assert_eq!(machine.snapshot().cpu.pc, MONITOR2_ROM_ADDRESS);
+        assert_eq!(
+            machine.read_memory(MONITOR2_ROM_END as u32, 1).unwrap(),
+            &[0x7e]
+        );
+
+        machine
+            .load_program(0, 0, &[0x21, 0x00, 0xc0, 0x36, 0x5a, 0x76])
+            .unwrap();
+        machine.run(3).unwrap();
+        assert_eq!(
+            machine.read_memory(MONITOR2_ROM_ADDRESS as u32, 1).unwrap(),
+            &[0]
+        );
+    }
+
+    #[test]
+    fn monitor2_rejects_program_loading_outside_ram() {
+        let mut machine = Machine::new();
+        machine
+            .load_monitor2_rom(&vec![0; MONITOR2_ROM_SIZE])
+            .unwrap();
+        assert_eq!(
+            machine.load_program(MONITOR2_ROM_ADDRESS as u32, 0, &[0x76]),
+            Err(MachineError::MemoryNotWritable {
+                address: MONITOR2_ROM_ADDRESS as u32,
+                length: 1
+            })
+        );
+    }
+
+    #[test]
+    fn monitor2_reset_restores_the_rom_entry_point() {
+        let mut machine = Machine::new();
+        let mut rom = vec![0; MONITOR2_ROM_SIZE];
+        rom[0] = 0x76;
+        machine.load_monitor2_rom(&rom).unwrap();
+        machine.run(1).unwrap();
+        assert_eq!(machine.snapshot().cpu.pc, MONITOR2_ROM_ADDRESS + 1);
+
+        machine.reset();
+        assert_eq!(machine.snapshot().cpu.pc, MONITOR2_ROM_ADDRESS);
+        assert_eq!(
+            machine.read_memory(MONITOR2_ROM_ADDRESS as u32, 1).unwrap(),
+            &[0x76]
+        );
     }
 }

@@ -40,4 +40,25 @@ describe("WASM emulator", () => {
     });
     core.dispose();
   });
+
+  it("loads Monitor 2 ROM and reports an invalid size", async () => {
+    const core = await createTestCore();
+    const rom = new Uint8Array(0x1800);
+    rom[0] = 0x76;
+    const loaded = await core.loadMonitor2Rom(rom);
+    expect(loaded.cpu.pc).toBe(0xc000);
+
+    const stopped = await core.run(1);
+    expect(stopped.cpu.halted).toBe(true);
+    expect(stopped.cpu.pc).toBe(0xc001);
+
+    const result = await core.loadMonitor2Rom(new Uint8Array(1)).catch((error: unknown) => error);
+    expect(result).toBeInstanceOf(EmulatorException);
+    expect((result as EmulatorException).error).toEqual({
+      kind: "invalidRomSize",
+      expected: 0x1800,
+      actual: 1,
+    });
+    core.dispose();
+  });
 });
