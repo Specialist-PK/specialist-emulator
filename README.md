@@ -43,6 +43,7 @@ packages/
 tools/
   ci/                # покрытый тестами выбор CI jobs
   doctor/            # окружение и согласованность репозитория
+  setup/             # настройка локального CLI/web-окружения
   boundaries/        # границы объявленных зависимостей
   dev-server/        # фоновый Vite для отладки из редакторов
   system-deps/       # единый список пакетов Debian/Ubuntu
@@ -60,21 +61,26 @@ Web и Tauri → общий UI → core-api
 
 ## Окружение разработки
 
-Для web-сборки нужны Rust, bun и `wasm-bindgen-cli`. Desktop дополнительно требует системные зависимости Tauri.
+Для локальной настройки нужны bun и rustup. Основной сценарий:
 
 ```sh
-rustup toolchain install
-bun install
-bun run doctor
+# Установить Rust toolchain, wasm-bindgen-cli и JS-зависимости, затем проверить CLI/web
+bun run setup --install
+
+# Повторная настройка и проверка без переустановки Rust-инструментов
+bun run setup
 ```
 
-У версий один источник: `rust-toolchain.toml`, `package.json`, `Cargo.lock` и `tools/system-deps/debian.txt`. На Debian/Ubuntu пакеты для desktop устанавливаются командой:
+Setup использует версии из `rust-toolchain.toml`, `package.json` и `Cargo.lock`, устанавливает JS-зависимости с `--frozen-lockfile` и запускает `doctor core wasm`. Он никогда не выполняет `sudo` и не требует desktop-зависимости для CLI/web-разработки.
+
+На Debian/Ubuntu пакеты для desktop устанавливаются отдельной явной командой из единого списка `tools/system-deps/debian.txt`:
 
 ```sh
 xargs -a tools/system-deps/debian.txt sudo apt-get install -y --no-install-recommends
+bun run doctor native
 ```
 
-Либо откройте репозиторий в прилагаемом devcontainer. Он содержит Rust, WASM, bun и нативные зависимости сборки. Графическое окно Tauri, сборки macOS/Windows и браузерный E2E требуют хоста или дополнительных инструментов.
+Для других ОС см. [требования Tauri](https://v2.tauri.app/start/prerequisites/). Либо откройте репозиторий в прилагаемом devcontainer — необязательной изолированной альтернативе с Rust, WASM, bun и нативными зависимостями сборки. Графическое окно Tauri, сборки macOS/Windows и браузерный E2E требуют хоста или дополнительных инструментов.
 
 ## Запуск и сборка
 

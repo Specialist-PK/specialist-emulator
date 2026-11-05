@@ -47,6 +47,10 @@ describe("select", () => {
     expect(ran(["tools/dev-server/src/index.ts"])).toEqual(["ts", "wasm"]);
   });
 
+  it("runs only tooling checks for the environment setup helper", () => {
+    expect(ran(["tools/setup/src/index.ts"])).toEqual(["ts"]);
+  });
+
   it("skips the web job for a change that only touches the desktop app", () => {
     expect(ran(["apps/native/src/core.ts"])).toEqual(["native", "ts"]);
     expect(ran(["apps/native/src-tauri/src/lib.rs"])).toEqual(["native", "rust"]);

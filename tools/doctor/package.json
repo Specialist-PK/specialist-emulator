@@ -2,6 +2,9 @@
   "name": "@specialist/doctor",
   "private": true,
   "type": "module",
+  "exports": {
+    "./parse": "./src/parse.ts"
+  },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run"

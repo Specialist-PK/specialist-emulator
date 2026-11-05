@@ -43,6 +43,7 @@ packages/
 tools/
   ci/                # tested CI job selection
   doctor/            # environment and repository consistency checks
+  setup/             # local CLI/web environment setup
   boundaries/        # declared dependency boundary checks
   dev-server/        # background Vite for editor debugging
   system-deps/       # single Debian/Ubuntu package list
@@ -60,21 +61,26 @@ The core does not use filesystem, DOM, Tauri, or other platform APIs. Browser an
 
 ## Development environment
 
-Rust, bun, and `wasm-bindgen-cli` are required for web builds. Desktop additionally requires Tauri system dependencies.
+Local setup requires bun and rustup. The primary workflow is:
 
 ```sh
-rustup toolchain install
-bun install
-bun run doctor
+# Install the Rust toolchain, wasm-bindgen-cli, and JS dependencies, then check CLI/web
+bun run setup --install
+
+# Repeat setup and checks without reinstalling Rust tools
+bun run setup
 ```
 
-Versions have one source: `rust-toolchain.toml`, `package.json`, `Cargo.lock`, and `tools/system-deps/debian.txt`. On Debian/Ubuntu, desktop packages can be installed with:
+Setup reads versions from `rust-toolchain.toml`, `package.json`, and `Cargo.lock`, installs JavaScript dependencies with `--frozen-lockfile`, and runs `doctor core wasm`. It never runs `sudo` and does not require desktop dependencies for CLI/web development.
+
+On Debian/Ubuntu, install desktop packages as a separate explicit step using the single `tools/system-deps/debian.txt` list:
 
 ```sh
 xargs -a tools/system-deps/debian.txt sudo apt-get install -y --no-install-recommends
+bun run doctor native
 ```
 
-Alternatively, open the repository in the provided devcontainer. It contains Rust, WASM, bun, and native build dependencies. Graphical Tauri windows, macOS/Windows builds, and browser E2E still require the host or additional tools.
+For other operating systems, see the [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/). Alternatively, open the repository in the provided devcontainer, an optional isolated alternative with Rust, WASM, bun, and native build dependencies. Graphical Tauri windows, macOS/Windows builds, and browser E2E still require the host or additional tools.
 
 ## Run and build
 

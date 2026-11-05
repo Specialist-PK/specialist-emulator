@@ -30,6 +30,7 @@
   },
   "type": "module",
   "scripts": {
+    "setup": "bun tools/setup/src/index.ts",
     "dev:web": "bun run --filter @specialist/web dev",
     "dev:web:start": "bun tools/dev-server/src/index.ts start",
     "dev:web:stop": "bun tools/dev-server/src/index.ts stop",
