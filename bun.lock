@@ -134,6 +134,19 @@
         "vitest": "catalog:",
       },
     },
+    "tools/setup": {
+      "name": "@specialist/setup",
+      "dependencies": {
+        "@specialist/doctor": "workspace:*",
+      },
+      "devDependencies": {
+        "@specialist/config": "workspace:*",
+        "@types/bun": "catalog:",
+        "@types/node": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:",
+      },
+    },
   },
   "catalog": {
     "@solidjs/vite-plugin": "3.0.0-next.54",
@@ -405,6 +418,8 @@
     "@specialist/e2e": ["@specialist/e2e@workspace:tests/e2e"],
 
     "@specialist/native": ["@specialist/native@workspace:apps/native"],
+
+    "@specialist/setup": ["@specialist/setup@workspace:tools/setup"],
 
     "@specialist/web": ["@specialist/web@workspace:apps/web"],
 
